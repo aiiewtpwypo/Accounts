@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Milk Tea Finance Tracker v3</title>
+    <title>Milk Tea Finance Tracker v4</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧋</text></svg>">
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -47,6 +47,7 @@
             padding: 20px;
             background-image: var(--bg-image);
             background-size: var(--bg-size);
+            position: relative;
         }
 
         .container {
@@ -61,6 +62,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
         }
         .header-title h1 {
             font-size: 1.8rem;
@@ -74,6 +77,32 @@
             font-size: 0.9rem;
             color: var(--text-muted);
             margin-left: 42px;
+        }
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        /* Utility Buttons */
+        .btn-sm {
+            font-size: 0.85rem;
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 1px solid var(--primary-color);
+            background: white;
+            color: var(--primary-dark);
+            font-weight: 700;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            text-decoration: none;
+        }
+        .btn-sm:hover {
+            background: var(--primary-color);
+            color: white;
         }
 
         /* Grid Layout */
@@ -102,6 +131,7 @@
             margin-bottom: 20px;
             display: flex;
             align-items: center;
+            justify-content: space-between;
             gap: 8px;
             border-bottom: 2px solid #F4F1EE;
             padding-bottom: 10px;
@@ -185,6 +215,24 @@
             grid-row: span 2;
             max-height: 550px;
         }
+        .list-header-controls {
+            display: flex;
+            gap: 10px;
+        }
+        .search-input {
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 2px solid #F0EAE6;
+            outline: none;
+            font-size: 0.85rem;
+            width: 150px;
+            transition: width 0.3s;
+        }
+        .search-input:focus {
+            width: 200px;
+            border-color: var(--primary-color);
+        }
+
         .list-container { overflow-y: auto; flex: 1; padding-right: 5px; }
 
         .transaction-item {
@@ -305,6 +353,35 @@
             min-height: 250px;
         }
 
+        /* --- Toast Notification --- */
+        #toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .toast {
+            background: white;
+            padding: 12px 20px;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideIn 0.3s ease-out;
+            min-width: 250px;
+            border-left: 5px solid var(--primary-color);
+        }
+        .toast.success { border-left-color: var(--success-color); }
+        .toast.error { border-left-color: var(--danger-color); }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
         @media (max-width: 768px) {
             .dashboard-grid { display: flex; flex-direction: column; }
             .accounts-row { grid-template-columns: 1fr 1fr; }
@@ -312,6 +389,7 @@
             .chart-toolbar { flex-direction: column; align-items: flex-start; }
             header { flex-direction: column; align-items: flex-start; }
             .header-subtitle { margin-left: 0; }
+            .header-actions { width: 100%; flex-wrap: wrap; }
         }
     </style>
 </head>
@@ -324,9 +402,16 @@
                 <h1>🧋 Milk Tea Finance</h1>
                 <div class="header-subtitle">多帳戶記帳 | 簡單理財</div>
             </div>
-            <div style="text-align: right;">
-                <div style="font-weight: 800; color: var(--primary-dark); font-size: 1.2rem;" id="currentDate">Loading...</div>
-                <button onclick="loadTestData()" style="font-size:0.8rem; color: var(--primary-color); background:none; border:2px solid var(--primary-color); border-radius:8px; padding:4px 8px; margin-top:5px; font-weight:700; cursor:pointer;">載入測試資料</button>
+            
+            <div class="header-actions">
+                <!-- Backup Actions -->
+                <button class="btn-sm" onclick="exportData()" title="匯出紀錄">📥 匯出</button>
+                <button class="btn-sm" onclick="document.getElementById('importFile').click()" title="匯入紀錄">📤 匯入</button>
+                <input type="file" id="importFile" style="display:none" onchange="importData(this)" accept=".json">
+                
+                <!-- Reset & Date -->
+                <button class="btn-sm" onclick="loadTestData()" title="載入預設資料">🔄 測試數據</button>
+                <div style="font-weight: 800; color: var(--primary-dark); font-size: 1.1rem; margin-left: 10px;" id="currentDate">Loading...</div>
             </div>
         </header>
 
@@ -421,7 +506,9 @@
             <div class="widget widget-list">
                 <div class="widget-title">
                     🧾 近期紀錄
-                    <span style="margin-left:auto; font-size:0.8rem; font-weight:400; color:var(--text-muted);">最近 50 筆</span>
+                    <div class="list-header-controls">
+                        <input type="text" id="search" class="search-input" placeholder="🔍 搜尋紀錄..." onkeyup="renderList()">
+                    </div>
                 </div>
                 <div class="list-container" id="txList"></div>
                 <div id="emptyState" style="text-align:center; padding:40px; color:var(--text-muted); display:none;">
@@ -477,6 +564,9 @@
 
         </div>
     </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
 
     <script>
         // --- 1. Data & Config ---
@@ -614,7 +704,7 @@
                 tx.toAccount = document.getElementById('toAccount').value;
                 tx.category = '轉帳';
                 tx.icon = '🔄';
-                if(tx.fromAccount === tx.toAccount) return alert('帳戶不能相同');
+                if(tx.fromAccount === tx.toAccount) return showToast('轉出與轉入帳戶不能相同', 'error');
             } else {
                 tx.account = document.getElementById('account').value;
                 tx.category = categorySelect.value;
@@ -626,6 +716,8 @@
             saveData();
             renderUI();
             
+            showToast('新增成功！', 'success');
+            
             // Reset fields
             document.getElementById('desc').value = '';
             document.getElementById('amount').value = '';
@@ -636,6 +728,7 @@
                 transactions = transactions.filter(t => t.id !== id);
                 saveData();
                 renderUI();
+                showToast('已刪除紀錄', 'success');
             }
         }
 
@@ -668,14 +761,24 @@
 
         function renderList() {
             const listEl = document.getElementById('txList');
+            const searchVal = document.getElementById('search').value.toLowerCase();
+            
             listEl.innerHTML = '';
-            if (transactions.length === 0) {
+            
+            // Filter by search
+            const filtered = transactions.filter(t => 
+                t.desc.toLowerCase().includes(searchVal) || 
+                t.category.toLowerCase().includes(searchVal) ||
+                (ACCOUNTS[t.account] && ACCOUNTS[t.account].includes(searchVal))
+            );
+
+            if (filtered.length === 0) {
                 document.getElementById('emptyState').style.display = 'block';
                 return;
             }
             document.getElementById('emptyState').style.display = 'none';
 
-            transactions.slice(0, 50).forEach(tx => {
+            filtered.slice(0, 50).forEach(tx => {
                 const div = document.createElement('div');
                 div.className = `transaction-item type-${tx.type}`;
                 
@@ -832,7 +935,57 @@
             }
         }
 
-        // Test Data Loader
+        // --- 8. System Utilities ---
+
+        function showToast(msg, type = 'normal') {
+            const container = document.getElementById('toast-container');
+            const div = document.createElement('div');
+            div.className = `toast ${type}`;
+            div.innerHTML = `<span>${type==='success'?'✅':type==='error'?'⚠️':'💬'}</span> ${msg}`;
+            container.appendChild(div);
+            setTimeout(() => {
+                div.style.opacity = '0';
+                div.style.transform = 'translateX(100%)';
+                setTimeout(() => div.remove(), 300);
+            }, 3000);
+        }
+
+        function exportData() {
+            const dataStr = JSON.stringify(transactions, null, 2);
+            const blob = new Blob([dataStr], {type: "application/json"});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `milktea_backup_${new Date().toISOString().slice(0,10)}.json`;
+            a.click();
+            showToast('資料已匯出！請妥善保存', 'success');
+        }
+
+        function importData(input) {
+            const file = input.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if(Array.isArray(imported)) {
+                        if(confirm(`確定匯入 ${imported.length} 筆資料？這將覆蓋現有紀錄。`)) {
+                            transactions = imported;
+                            saveData();
+                            renderUI();
+                            showToast('資料還原成功！', 'success');
+                        }
+                    } else {
+                        showToast('檔案格式錯誤', 'error');
+                    }
+                } catch(err) {
+                    showToast('無效的 JSON 檔案', 'error');
+                }
+                input.value = ''; // reset
+            };
+            reader.readAsText(file);
+        }
+
         function loadTestData() {
             if(confirm('載入測試數據？(這會清除現有資料並填入預設餘額)')) {
                 const today = new Date().toISOString().split('T')[0];
