@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Milk Tea Finance v6.5</title>
+    <title>Milk Tea Finance v7.0</title>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -169,17 +169,24 @@
 
         /* --- Widget Content Specifics --- */
         
-        /* 1. Accounts Widget (Optimized for One Page View) */
+        /* 1. Accounts Widget (Layout Updated) */
         .accounts-container {
             display: grid;
-            /* 稍微縮小最小寬度 (180px)，增加排成一行的機會，同時高度增加可容納兩行 */
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            /* Default: 2 columns for individual accounts */
+            grid-template-columns: 1fr 1fr;
             gap: 20px;
             height: 100%;
-            overflow-y: auto; /* 保留 auto 作為保險，但目標是讓預設高度足夠而不觸發 */
+            overflow-y: auto;
             padding: 5px;
-            align-content: start; /* 內容靠上對齊 */
+            align-content: start;
         }
+        /* Desktop: 4 columns for individual accounts */
+        @media (min-width: 900px) {
+            .accounts-container {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
         .acc-card {
             background: #FAFAFA;
             padding: 20px;
@@ -199,19 +206,23 @@
         .acc-taishin { border-left-color: #E60012; }
         .acc-cash { border-left-color: #D4A373; }
         
-        /* 總金額卡片 */
+        /* 總金額卡片 - 強制佔滿上方 */
         .acc-total { 
             border-left: none;
             background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
             cursor: default;
             color: white;
-            grid-column: span 2; 
+            grid-column: 1 / -1; /* Span full width row */
+            margin-bottom: 5px;
         }
-        @media (max-width: 600px) { .acc-total { grid-column: span 1; } }
-
-        .acc-total:hover { transform: none; box-shadow: 0 4px 15px rgba(197, 157, 127, 0.3); }
-        .acc-total .acc-label { color: rgba(255,255,255,0.9); }
-        .acc-total .acc-val { color: white; font-size: 1.8rem; text-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        /* Override hover for total card to fix visibility issue */
+        .acc-total:hover { 
+            transform: none; 
+            box-shadow: 0 4px 15px rgba(197, 157, 127, 0.3); 
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)) !important;
+        }
+        .acc-total .acc-label, .acc-total .acc-val { color: white !important; }
+        .acc-total .acc-val::after { content: none !important; } /* No edit icon */
 
         .acc-val { 
             font-size: 1.5rem; 
@@ -225,7 +236,7 @@
         }
         .acc-label { font-size: 0.9rem; color: var(--text-muted); font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
 
-        /* 2. Input Widget (Compact Mode) */
+        /* 2. Input Widget (With Sub-category) */
         .input-scroll-area { 
             overflow-y: auto; 
             flex: 1; 
@@ -349,7 +360,7 @@
 
     <div class="dashboard-grid" id="grid">
         
-        <!-- Widget 1: Accounts - Height Increased to 5 Rows (approx 380px) to prevent scrolling -->
+        <!-- Widget 1: Accounts -->
         <div class="widget" id="widget-accounts" data-id="accounts" style="grid-column: span 12; grid-row: span 5;">
             <div class="resize-handle"></div>
             <div class="widget-header">
@@ -378,9 +389,13 @@
                         <label class="input-label">日期</label>
                         <input type="date" id="date" class="form-control" required>
                     </div>
+                    <!-- New Sub-category logic -->
                     <div class="input-group" id="grp-cat">
-                        <label class="input-label">分類</label>
-                        <select id="category" class="form-control"></select>
+                        <label class="input-label">分類與細項</label>
+                        <div style="display: flex; gap: 10px;">
+                            <select id="category" class="form-control" style="flex: 1;" onchange="updateSubCats()"></select>
+                            <select id="sub-category" class="form-control" style="flex: 1;"></select>
+                        </div>
                     </div>
                     <div class="input-group">
                         <label class="input-label">項目 / 備註</label>
@@ -468,9 +483,23 @@
 <script>
     // --- 1. Data Config ---
     const ACCOUNTS = { ctbc: '中國信託', cathay: '國泰世華', taishin: '台新銀行', cash: '現金' };
-    const CATS = {
-        expense: ['餐飲', '交通', '購物', '娛樂', '帳單', '學習', '其他'],
-        income: ['薪水', '獎金', '投資', '其他']
+    
+    // Updated Category Structure with Sub-categories
+    const EXPENSE_CATS = {
+        '餐飲': ['早餐', '午餐', '晚餐', '飲料', '零食', '宵夜'],
+        '交通': ['捷運', '公車', '計程車', '加油', '停車', '保養'],
+        '購物': ['日用品', '服飾', '電子產品', '美妝', '雜貨'],
+        '娛樂': ['電影', '遊戲', '聚會', '訂閱服務', '旅行'],
+        '帳單': ['房租', '電費', '水費', '瓦斯', '手機', '網路'],
+        '學習': ['書籍', '課程', '考試', '文具'],
+        '其他': ['醫療', '保險', '捐款', '雜項']
+    };
+
+    const INCOME_CATS = {
+        '薪水': ['本薪', '兼職'],
+        '獎金': ['年終', '績效', '分紅'],
+        '投資': ['股票', '利息', '股息'],
+        '其他': ['收禮', '退款', '閒置交易']
     };
     
     // --- 2. State ---
@@ -511,7 +540,6 @@
         localStorage.setItem('mtf_v6_layout', JSON.stringify(layout));
     }
     
-    // Add reset layout function accessible from header
     function resetLayout() {
         if(confirm('確定要重置所有區塊的位置和大小嗎？')) {
             localStorage.removeItem('mtf_v6_layout');
@@ -594,7 +622,6 @@
 
     // --- 4. App Logic ---
     
-    // DateTime Logic (Enhanced)
     function updateDateTime() {
         const now = new Date();
         const days = ['日', '一', '二', '三', '四', '五', '六'];
@@ -609,7 +636,7 @@
     // Init
     initLayout();
     document.getElementById('date').value = new Date().toISOString().split('T')[0];
-    updateCats();
+    updateCats(); // Initial population
     renderAll();
 
     function setType(t) {
@@ -627,13 +654,35 @@
         }
     }
 
+    // Populate Main Categories
     function updateCats() {
         const sel = document.getElementById('category');
         sel.innerHTML = '';
-        CATS[currentType].forEach(c => {
+        const catsObj = currentType === 'income' ? INCOME_CATS : EXPENSE_CATS;
+        
+        for (const cat in catsObj) {
             const opt = document.createElement('option');
-            opt.value = c; opt.innerText = c;
+            opt.value = cat;
+            opt.innerText = cat;
             sel.appendChild(opt);
+        }
+        updateSubCats(); // Trigger sub-cat update
+    }
+
+    // Populate Sub Categories based on Main Category
+    function updateSubCats() {
+        const mainCat = document.getElementById('category').value;
+        const subSel = document.getElementById('sub-category');
+        subSel.innerHTML = '';
+        
+        const catsObj = currentType === 'income' ? INCOME_CATS : EXPENSE_CATS;
+        const subList = catsObj[mainCat] || [];
+        
+        subList.forEach(sub => {
+            const opt = document.createElement('option');
+            opt.value = sub;
+            opt.innerText = sub;
+            subSel.appendChild(opt);
         });
     }
 
@@ -655,9 +704,11 @@
             tx.to = document.getElementById('toAccount').value;
             if(tx.from === tx.to) return alert('帳戶相同');
             tx.category = '轉帳';
+            tx.subCategory = '';
         } else {
             tx.acc = document.getElementById('account').value;
             tx.category = document.getElementById('category').value;
+            tx.subCategory = document.getElementById('sub-category').value;
         }
 
         transactions.unshift(tx);
@@ -676,7 +727,6 @@
         });
     }
 
-    // Modal System - Optimized for UX
     const modalOverlay = document.getElementById('modalOverlay');
     const modalTitle = document.getElementById('modalTitle');
     const modalBody = document.getElementById('modalBody');
@@ -685,19 +735,15 @@
     function openModal(title, contentHTML, onConfirm) {
         modalTitle.innerText = title;
         modalBody.innerHTML = contentHTML;
-        
         modalConfirmBtn.onclick = onConfirm;
         modalOverlay.classList.add('active');
         
-        // Auto focus input & Select All text & Bind Enter Key
         const input = modalBody.querySelector('input');
         if(input) {
             setTimeout(() => {
                 input.focus();
-                input.select(); // Highlight text
+                input.select();
             }, 50);
-            
-            // Allow Enter key to submit
             input.onkeydown = (e) => {
                 if(e.key === 'Enter') {
                     e.preventDefault();
@@ -709,10 +755,9 @@
 
     function closeModal() {
         modalOverlay.classList.remove('active');
-        modalConfirmBtn.onclick = null; // Clean up
+        modalConfirmBtn.onclick = null;
     }
 
-    // Edit Balance Logic
     function editBalance(accKey) {
         let currentBal = 0;
         transactions.forEach(t => {
@@ -744,7 +789,8 @@
                     amount: Math.abs(diff),
                     type: diff > 0 ? 'income' : 'expense',
                     acc: accKey,
-                    category: '其他'
+                    category: '其他',
+                    subCategory: '修正'
                 };
                 transactions.unshift(tx);
                 saveData();
@@ -756,7 +802,6 @@
 
     function saveData() { localStorage.setItem('mtf_v6_txs', JSON.stringify(transactions)); }
 
-    // --- 5. Render Functions ---
     function renderAll() {
         renderAccounts();
         renderList();
@@ -777,13 +822,14 @@
         const container = document.getElementById('accounts-container');
         container.innerHTML = '';
 
-        // Render Total Card (Spans 2 columns if possible)
+        // Render Total Card (Always on top)
         const totalAmount = Object.values(bals).reduce((a, b) => a + b, 0);
         const totalDiv = document.createElement('div');
         totalDiv.className = 'acc-card acc-total';
         totalDiv.innerHTML = `<div class="acc-label">💰 總資產</div><div class="acc-val">$${totalAmount.toLocaleString()}</div>`;
         container.appendChild(totalDiv);
 
+        // Render other accounts
         for(const [k, v] of Object.entries(bals)) {
             const div = document.createElement('div');
             div.className = `acc-card acc-${k}`;
@@ -804,6 +850,9 @@
             const div = document.createElement('div');
             div.className = `tx-item type-${t.type}`;
             let info = t.type === 'transfer' ? `${ACCOUNTS[t.from]} → ${ACCOUNTS[t.to]}` : `${ACCOUNTS[t.acc]} · ${t.category}`;
+            // Append sub-category if exists
+            if(t.subCategory) info += ` - ${t.subCategory}`;
+            
             let amtClass = t.type === 'income' ? 'pos' : (t.type === 'expense' ? 'neg' : '');
             let sign = t.type === 'income' ? '+' : (t.type === 'expense' ? '-' : '');
             
