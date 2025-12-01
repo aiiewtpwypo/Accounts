@@ -25,7 +25,6 @@
             --shadow-soft: 0 10px 40px -10px rgba(197, 157, 127, 0.15);
             --shadow-hover: 0 20px 50px -12px rgba(197, 157, 127, 0.25);
             
-            --grid-col-width: 1fr;
             --grid-row-height: 60px;
             --grid-gap: 20px;
         }
@@ -94,6 +93,19 @@
             letter-spacing: 0.5px;
         }
         .datetime-display::before { content: '🕒'; font-size: 1.1rem; }
+
+        .btn-icon {
+            width: 40px; height: 40px;
+            border-radius: 12px;
+            border: 1px solid #F0EAE6;
+            background: white;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 1.2rem;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s;
+        }
+        .btn-icon:hover { background: var(--primary-color); color: white; border-color: var(--primary-color); }
 
         .btn-reset {
             padding: 8px 12px;
@@ -167,12 +179,9 @@
         }
         .widget:hover .resize-handle { opacity: 0.8; }
 
-        /* --- Widget Content Specifics --- */
-        
-        /* 1. Accounts Widget (Layout Updated) */
+        /* --- Accounts Widget --- */
         .accounts-container {
             display: grid;
-            /* Default: 2 columns for individual accounts */
             grid-template-columns: 1fr 1fr;
             gap: 20px;
             height: 100%;
@@ -180,25 +189,12 @@
             padding: 5px;
             align-content: start;
         }
-        /* Desktop: 4 columns for individual accounts */
-        @media (min-width: 900px) {
-            .accounts-container {
-                grid-template-columns: repeat(4, 1fr);
-            }
-        }
+        @media (min-width: 900px) { .accounts-container { grid-template-columns: repeat(4, 1fr); } }
 
         .acc-card {
-            background: #FAFAFA;
-            padding: 20px;
-            border-radius: 20px;
-            border-left: 6px solid #CCC;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            transition: all 0.2s;
-            cursor: pointer;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-            min-height: 100px;
+            background: #FAFAFA; padding: 20px; border-radius: 20px; border-left: 6px solid #CCC;
+            display: flex; flex-direction: column; justify-content: space-between;
+            transition: all 0.2s; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.03); min-height: 100px;
         }
         .acc-card:hover { transform: translateY(-3px); background: #FFF; box-shadow: 0 8px 20px rgba(197, 157, 127, 0.15); }
         .acc-ctbc { border-left-color: #009E96; }
@@ -206,92 +202,36 @@
         .acc-taishin { border-left-color: #E60012; }
         .acc-cash { border-left-color: #D4A373; }
         
-        /* 總金額卡片 - 強制佔滿上方 */
         .acc-total { 
             border-left: none;
             background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-            cursor: default;
-            color: white;
-            grid-column: 1 / -1; /* Span full width row */
-            margin-bottom: 5px;
+            cursor: default; color: white; grid-column: 1 / -1; margin-bottom: 5px;
         }
-        /* Override hover for total card to fix visibility issue */
-        .acc-total:hover { 
-            transform: none; 
-            box-shadow: 0 4px 15px rgba(197, 157, 127, 0.3); 
-            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)) !important;
-        }
+        .acc-total:hover { transform: none; box-shadow: 0 4px 15px rgba(197, 157, 127, 0.3); background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)) !important; }
         .acc-total .acc-label, .acc-total .acc-val { color: white !important; }
-        .acc-total .acc-val::after { content: none !important; } /* No edit icon */
+        .acc-total .acc-val::after { content: none !important; }
 
-        .acc-val { 
-            font-size: 1.5rem; 
-            font-weight: 800; 
-            color: var(--text-main); 
-            margin-top: 10px; 
-            position: relative;
-        }
-        .acc-card:not(.acc-total):hover .acc-val::after {
-            content: '✎'; position: absolute; right: 0; font-size: 0.9rem; color: var(--primary-color);
-        }
+        .acc-val { font-size: 1.5rem; font-weight: 800; color: var(--text-main); margin-top: 10px; position: relative; }
+        .acc-card:not(.acc-total):hover .acc-val::after { content: '✎'; position: absolute; right: 0; font-size: 0.9rem; color: var(--primary-color); }
         .acc-label { font-size: 0.9rem; color: var(--text-muted); font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
 
-        /* 2. Input Widget (With Sub-category) */
-        .input-scroll-area { 
-            overflow-y: auto; 
-            flex: 1; 
-            padding-right: 5px; 
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-        }
-        .type-tabs { 
-            display: flex; 
-            background: #F4F1EE; 
-            border-radius: 10px; 
-            padding: 3px; 
-            margin-bottom: 10px; 
-            flex-shrink: 0;
-        }
-        .tab-btn { 
-            flex: 1; padding: 6px;
-            border: none; background: transparent; cursor: pointer; 
-            border-radius: 8px; color: var(--text-muted); font-weight: 700; transition:0.2s; 
-            font-size: 0.9rem;
-        }
+        /* --- Input Widget --- */
+        .input-scroll-area { overflow-y: auto; flex: 1; padding-right: 5px; display: flex; flex-direction: column; justify-content: flex-start; }
+        .type-tabs { display: flex; background: #F4F1EE; border-radius: 10px; padding: 3px; margin-bottom: 10px; flex-shrink: 0; }
+        .tab-btn { flex: 1; padding: 6px; border: none; background: transparent; cursor: pointer; border-radius: 8px; color: var(--text-muted); font-weight: 700; transition:0.2s; font-size: 0.9rem; }
         .tab-btn.active { background: #FFF; color: var(--text-main); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .tab-btn[data-type="expense"].active { color: var(--danger-color); }
         .tab-btn[data-type="income"].active { color: var(--success-color); }
         
         .input-group { margin-bottom: 8px; }
         .input-label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 3px; font-weight: 700; }
-        .form-control { 
-            width: 100%; 
-            padding: 8px 10px; 
-            border: 2px solid #F0EAE6; 
-            border-radius: 10px; 
-            outline: none; 
-            background: #FAFAFA; 
-            font-size: 0.95rem; 
-            height: 38px;
-        }
+        .form-control { width: 100%; padding: 8px 10px; border: 2px solid #F0EAE6; border-radius: 10px; outline: none; background: #FAFAFA; font-size: 0.95rem; height: 38px; }
         .form-control:focus { border-color: var(--primary-color); background: #FFF; }
         
-        .btn-submit { 
-            width: 100%; 
-            padding: 10px;
-            background: var(--primary-color); 
-            color: white; border: none; 
-            border-radius: 12px; 
-            font-weight: 800; 
-            cursor: pointer; 
-            margin-top: auto;
-            font-size: 1rem; 
-            transition: 0.2s;
-        }
+        .btn-submit { width: 100%; padding: 10px; background: var(--primary-color); color: white; border: none; border-radius: 12px; font-weight: 800; cursor: pointer; margin-top: auto; font-size: 1rem; transition: 0.2s; }
         .btn-submit:hover { background: var(--primary-dark); transform: translateY(-1px); }
 
-        /* 3. List Widget */
+        /* --- List Widget --- */
         .list-controls { margin-bottom: 10px; }
         .search-input { width: 100%; padding: 8px 15px; border-radius: 20px; border: 2px solid #F0EAE6; outline:none; }
         .tx-list { overflow-y: auto; flex: 1; padding-right: 5px; }
@@ -307,10 +247,10 @@
         .tx-amt.neg { color: var(--danger-color); }
         .tx-amt.pos { color: var(--success-color); }
 
-        /* 4. Chart Widget */
+        /* --- Chart Widget --- */
         .chart-wrapper { position: relative; width: 100%; height: 100%; min-height: 250px; }
 
-        /* --- Custom Modal --- */
+        /* --- Modals (General & Settings) --- */
         .custom-modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.3); backdrop-filter: blur(4px);
@@ -318,23 +258,46 @@
             z-index: 1000; opacity: 0; transition: opacity 0.3s;
         }
         .custom-modal-overlay.active { display: flex; opacity: 1; }
+        
         .custom-modal {
             background: white; width: 90%; max-width: 400px;
             border-radius: 20px; padding: 25px;
             box-shadow: 0 20px 50px rgba(0,0,0,0.1);
             transform: scale(0.9); transition: transform 0.3s;
+            display: flex; flex-direction: column;
         }
+        /* Settings Modal specific */
+        .custom-modal.settings-modal { max-width: 700px; height: 80vh; padding: 0; }
+        
         .custom-modal-overlay.active .custom-modal { transform: scale(1); }
         .modal-title { font-size: 1.2rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 15px; }
         .modal-body { margin-bottom: 20px; color: var(--text-main); font-size: 0.95rem; }
         .modal-input { width: 100%; padding: 12px; border: 2px solid #F0EAE6; border-radius: 12px; font-size: 1.1rem; outline: none; margin-top: 10px; }
         .modal-input:focus { border-color: var(--primary-color); }
-        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: auto; }
         .modal-btn { padding: 10px 20px; border-radius: 10px; border: none; font-weight: 700; cursor: pointer; }
         .modal-btn-cancel { background: #F4F1EE; color: var(--text-muted); }
         .modal-btn-confirm { background: var(--primary-color); color: white; }
 
-        /* Responsive */
+        /* Settings Modal Styles */
+        .settings-header { padding: 20px; border-bottom: 1px solid #F0F0F0; display: flex; justify-content: space-between; align-items: center; }
+        .settings-content { flex: 1; display: flex; overflow: hidden; }
+        .settings-col { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; }
+        .settings-col:first-child { border-right: 1px solid #F0F0F0; background: #FAFAFA; flex: 0 0 200px; }
+        .settings-list { list-style: none; padding: 0; }
+        .settings-item { 
+            padding: 10px 15px; border-radius: 10px; cursor: pointer; 
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; font-weight: 600; font-size: 0.9rem;
+        }
+        .settings-item:hover { background: #F4F1EE; }
+        .settings-item.active { background: white; color: var(--primary-color); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .settings-item .btn-del-cat { opacity: 0; color: #CCC; cursor: pointer; font-size: 1.1rem; padding: 2px 6px; }
+        .settings-item:hover .btn-del-cat { opacity: 1; }
+        .settings-item .btn-del-cat:hover { color: var(--danger-color); }
+        .settings-add { margin-top: 10px; display: flex; gap: 5px; }
+        .settings-add input { flex: 1; padding: 8px; border: 1px solid #E0E0E0; border-radius: 8px; font-size: 0.9rem; }
+        .settings-add button { padding: 8px 12px; background: var(--primary-color); color: white; border: none; border-radius: 8px; cursor: pointer; }
+
         @media (max-width: 768px) {
             .dashboard-grid { display: flex; flex-direction: column; height: auto; }
             .widget { height: auto !important; min-height: 300px; }
@@ -342,6 +305,8 @@
             header { flex-direction: column; align-items: flex-start; gap: 10px; }
             .header-right { width: 100%; justify-content: space-between; }
             .datetime-display { flex: 1; justify-content: center; }
+            .settings-content { flex-direction: column; }
+            .settings-col:first-child { border-right: none; border-bottom: 1px solid #F0F0F0; flex: 0 0 150px; }
         }
     </style>
 </head>
@@ -354,6 +319,7 @@
         </div>
         <div class="header-right">
             <div class="datetime-display" id="datetime">Loading...</div>
+            <button class="btn-icon" onclick="openSettings()" title="設定分類與細項">⚙️</button>
             <button class="btn-reset" onclick="resetLayout()" title="若版面跑掉請點此">⟲ 重置版面</button>
         </div>
     </header>
@@ -389,7 +355,6 @@
                         <label class="input-label">日期</label>
                         <input type="date" id="date" class="form-control" required>
                     </div>
-                    <!-- New Sub-category logic -->
                     <div class="input-group" id="grp-cat">
                         <label class="input-label">分類與細項</label>
                         <div style="display: flex; gap: 10px;">
@@ -401,33 +366,18 @@
                         <label class="input-label">項目 / 備註</label>
                         <input type="text" id="desc" class="form-control" placeholder="輸入備註..." required>
                     </div>
-                    <!-- Single Account -->
                     <div class="input-group" id="grp-acc">
                         <label class="input-label" id="lbl-acc">支出帳戶</label>
                         <select id="account" class="form-control">
-                            <option value="cash">現金</option>
-                            <option value="ctbc">中國信託</option>
-                            <option value="cathay">國泰世華</option>
-                            <option value="taishin">台新銀行</option>
+                            <!-- Options populated by JS -->
                         </select>
                     </div>
-                    <!-- Transfer -->
                     <div class="input-group" id="grp-trans" style="display:none;">
                         <label class="input-label">轉出 (From)</label>
-                        <select id="fromAccount" class="form-control">
-                            <option value="ctbc">中國信託</option>
-                            <option value="cathay">國泰世華</option>
-                            <option value="taishin">台新銀行</option>
-                            <option value="cash">現金</option>
-                        </select>
+                        <select id="fromAccount" class="form-control"></select>
                         <div style="text-align:center; margin:2px; font-size:0.8rem; color:#ccc;">↓</div>
                         <label class="input-label">轉入 (To)</label>
-                        <select id="toAccount" class="form-control">
-                            <option value="cash">現金</option>
-                            <option value="ctbc">中國信託</option>
-                            <option value="cathay">國泰世華</option>
-                            <option value="taishin">台新銀行</option>
-                        </select>
+                        <select id="toAccount" class="form-control"></select>
                     </div>
                     <div class="input-group">
                         <label class="input-label">金額</label>
@@ -468,7 +418,7 @@
     </div>
 </div>
 
-<!-- Custom Modal -->
+<!-- Standard Modal -->
 <div class="custom-modal-overlay" id="modalOverlay">
     <div class="custom-modal">
         <div class="modal-title" id="modalTitle">標題</div>
@@ -480,12 +430,53 @@
     </div>
 </div>
 
+<!-- Settings Modal -->
+<div class="custom-modal-overlay" id="settingsModalOverlay">
+    <div class="custom-modal settings-modal">
+        <div class="settings-header">
+            <div class="modal-title" style="margin:0;">⚙️ 分類設定</div>
+            <button class="modal-btn modal-btn-cancel" onclick="closeSettings()">關閉</button>
+        </div>
+        <div style="padding: 10px 20px; border-bottom: 1px solid #F0F0F0;">
+            <div class="type-tabs" style="margin:0;">
+                <button class="tab-btn active" id="set-tab-expense" onclick="switchSettingsType('expense')">支出分類</button>
+                <button class="tab-btn" id="set-tab-income" onclick="switchSettingsType('income')">收入分類</button>
+            </div>
+        </div>
+        <div class="settings-content">
+            <!-- Left Col: Main Categories -->
+            <div class="settings-col">
+                <h4 style="margin-bottom:10px; color:var(--text-muted);">主分類</h4>
+                <ul class="settings-list" id="settingsCatList"></ul>
+                <div class="settings-add">
+                    <input type="text" id="newCatInput" placeholder="新增主分類...">
+                    <button onclick="addSettingsCat()">＋</button>
+                </div>
+            </div>
+            <!-- Right Col: Sub Categories -->
+            <div class="settings-col">
+                <h4 style="margin-bottom:10px; color:var(--text-muted); display:flex; justify-content:space-between;">
+                    細項分類 <span id="selectedCatName" style="color:var(--primary-color);"></span>
+                </h4>
+                <ul class="settings-list" id="settingsSubList">
+                    <li style="color:#CCC; text-align:center; padding:20px;">請先選擇左側主分類</li>
+                </ul>
+                <div class="settings-add" id="subAddGroup" style="display:none;">
+                    <input type="text" id="newSubInput" placeholder="新增細項...">
+                    <button onclick="addSettingsSub()">＋</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     // --- 1. Data Config ---
+    const ACCOUNT_ORDER = ['ctbc', 'cathay', 'taishin', 'cash'];
     const ACCOUNTS = { ctbc: '中國信託', cathay: '國泰世華', taishin: '台新銀行', cash: '現金' };
     
-    // Updated Category Structure with Sub-categories
-    const EXPENSE_CATS = {
+    // Default Categories
+    const DEFAULT_EXPENSE_CATS = {
         '餐飲': ['早餐', '午餐', '晚餐', '飲料', '零食', '宵夜'],
         '交通': ['捷運', '公車', '計程車', '加油', '停車', '保養'],
         '購物': ['日用品', '服飾', '電子產品', '美妝', '雜貨'],
@@ -495,18 +486,30 @@
         '其他': ['醫療', '保險', '捐款', '雜項']
     };
 
-    const INCOME_CATS = {
+    const DEFAULT_INCOME_CATS = {
         '薪水': ['本薪', '兼職'],
         '獎金': ['年終', '績效', '分紅'],
         '投資': ['股票', '利息', '股息'],
         '其他': ['收禮', '退款', '閒置交易']
     };
     
-    // --- 2. State ---
+    // --- 2. State & Storage ---
+    // Load Transactions
     let transactions = JSON.parse(localStorage.getItem('mtf_v6_txs')) || [];
+    
+    // Load Categories (or use default)
+    let categories = JSON.parse(localStorage.getItem('mtf_v7_cats')) || {
+        expense: DEFAULT_EXPENSE_CATS,
+        income: DEFAULT_INCOME_CATS
+    };
+
     let currentType = 'expense';
     let chartInstance = null;
     let chartType = 'doughnut';
+
+    // Settings State
+    let settingsType = 'expense';
+    let selectedSettingsCat = null;
 
     // --- 3. Drag & Resize Logic ---
     const grid = document.getElementById('grid');
@@ -551,93 +554,64 @@
         const header = w.querySelector('.widget-header');
         header.addEventListener('mousedown', () => w.setAttribute('draggable', 'true'));
         header.addEventListener('mouseup', () => w.setAttribute('draggable', 'false'));
-        
-        w.addEventListener('dragstart', function(e) {
-            draggedItem = this;
-            this.classList.add('dragging');
-            e.dataTransfer.effectAllowed = 'move';
-        });
-        w.addEventListener('dragend', function() {
-            this.classList.remove('dragging');
-            this.setAttribute('draggable', 'false');
-            draggedItem = null;
-            saveLayout();
-        });
-        
+        w.addEventListener('dragstart', function(e) { draggedItem = this; this.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; });
+        w.addEventListener('dragend', function() { this.classList.remove('dragging'); this.setAttribute('draggable', 'false'); draggedItem = null; saveLayout(); });
         const resizer = w.querySelector('.resize-handle');
         if(resizer) resizer.addEventListener('mousedown', initResize);
     });
 
-    grid.addEventListener('dragover', function(e) {
-        e.preventDefault();
-        const afterElement = getDragAfterElement(grid, e.clientY);
-        if (afterElement == null) grid.appendChild(draggedItem);
-        else grid.insertBefore(draggedItem, afterElement);
-    });
+    grid.addEventListener('dragover', function(e) { e.preventDefault(); const afterElement = getDragAfterElement(grid, e.clientY); if (afterElement == null) grid.appendChild(draggedItem); else grid.insertBefore(draggedItem, afterElement); });
 
     function getDragAfterElement(container, y) {
         const draggableElements = [...container.querySelectorAll('.widget:not(.dragging)')];
         return draggableElements.reduce((closest, child) => {
             const box = child.getBoundingClientRect();
             const offset = y - box.top - box.height / 2;
-            if (offset < 0 && offset > closest.offset) return { offset: offset, element: child };
-            else return closest;
+            if (offset < 0 && offset > closest.offset) return { offset: offset, element: child }; else return closest;
         }, { offset: Number.NEGATIVE_INFINITY }).element;
     }
 
     function initResize(e) {
-        e.preventDefault();
-        resizeItem = e.target.closest('.widget');
-        const startX = e.clientX;
-        const startY = e.clientY;
-        const startW = resizeItem.offsetWidth;
-        const startH = resizeItem.offsetHeight;
-        const colWidth = (grid.offsetWidth - (11 * GRID_GAP)) / 12;
-
+        e.preventDefault(); resizeItem = e.target.closest('.widget'); const startX = e.clientX; const startY = e.clientY; const startW = resizeItem.offsetWidth; const startH = resizeItem.offsetHeight; const colWidth = (grid.offsetWidth - (11 * GRID_GAP)) / 12;
         function doDrag(e) {
-            const newW = startW + e.clientX - startX;
-            const newH = startH + e.clientY - startY;
-            
-            let colSpan = Math.round((newW + GRID_GAP) / (colWidth + GRID_GAP));
-            let rowSpan = Math.round((newH + GRID_GAP) / (ROW_HEIGHT + GRID_GAP));
-            
-            colSpan = Math.max(3, Math.min(12, colSpan));
-            rowSpan = Math.max(3, rowSpan);
-
-            resizeItem.style.gridColumn = `span ${colSpan}`;
-            resizeItem.style.gridRow = `span ${rowSpan}`;
-            
+            const newW = startW + e.clientX - startX; const newH = startH + e.clientY - startY;
+            let colSpan = Math.round((newW + GRID_GAP) / (colWidth + GRID_GAP)); let rowSpan = Math.round((newH + GRID_GAP) / (ROW_HEIGHT + GRID_GAP));
+            colSpan = Math.max(3, Math.min(12, colSpan)); rowSpan = Math.max(3, rowSpan);
+            resizeItem.style.gridColumn = `span ${colSpan}`; resizeItem.style.gridRow = `span ${rowSpan}`;
             if(resizeItem.id === 'widget-chart' && chartInstance) chartInstance.resize();
         }
-
-        function stopDrag() {
-            window.removeEventListener('mousemove', doDrag);
-            window.removeEventListener('mouseup', stopDrag);
-            saveLayout();
-        }
-
-        window.addEventListener('mousemove', doDrag);
-        window.addEventListener('mouseup', stopDrag);
+        function stopDrag() { window.removeEventListener('mousemove', doDrag); window.removeEventListener('mouseup', stopDrag); saveLayout(); }
+        window.addEventListener('mousemove', doDrag); window.addEventListener('mouseup', stopDrag);
     }
 
     // --- 4. App Logic ---
     
     function updateDateTime() {
-        const now = new Date();
-        const days = ['日', '一', '二', '三', '四', '五', '六'];
-        const dateStr = `${now.getFullYear()}/${(now.getMonth()+1).toString().padStart(2,'0')}/${now.getDate().toString().padStart(2,'0')}`;
-        const dayStr = days[now.getDay()];
-        const timeStr = now.toLocaleTimeString('zh-TW', {hour12: false});
-        document.getElementById('datetime').innerText = `${dateStr} (${dayStr}) ${timeStr}`;
+        const now = new Date(); const days = ['日', '一', '二', '三', '四', '五', '六'];
+        document.getElementById('datetime').innerText = `${now.getFullYear()}/${(now.getMonth()+1).toString().padStart(2,'0')}/${now.getDate().toString().padStart(2,'0')} (${days[now.getDay()]}) ${now.toLocaleTimeString('zh-TW', {hour12: false})}`;
     }
-    setInterval(updateDateTime, 1000);
-    updateDateTime();
+    setInterval(updateDateTime, 1000); updateDateTime();
 
     // Init
     initLayout();
     document.getElementById('date').value = new Date().toISOString().split('T')[0];
+    populateAccountSelects();
     updateCats(); // Initial population
     renderAll();
+
+    function populateAccountSelects() {
+        const selects = ['account', 'fromAccount', 'toAccount'];
+        selects.forEach(id => {
+            const el = document.getElementById(id);
+            el.innerHTML = '';
+            ACCOUNT_ORDER.forEach(key => {
+                const opt = document.createElement('option');
+                opt.value = key;
+                opt.innerText = ACCOUNTS[key];
+                el.appendChild(opt);
+            });
+        });
+    }
 
     function setType(t) {
         currentType = t;
@@ -654,34 +628,31 @@
         }
     }
 
-    // Populate Main Categories
     function updateCats() {
         const sel = document.getElementById('category');
         sel.innerHTML = '';
-        const catsObj = currentType === 'income' ? INCOME_CATS : EXPENSE_CATS;
+        // Use dynamic categories from state
+        const catsObj = categories[currentType]; 
         
         for (const cat in catsObj) {
             const opt = document.createElement('option');
-            opt.value = cat;
-            opt.innerText = cat;
+            opt.value = cat; opt.innerText = cat;
             sel.appendChild(opt);
         }
-        updateSubCats(); // Trigger sub-cat update
+        updateSubCats();
     }
 
-    // Populate Sub Categories based on Main Category
     function updateSubCats() {
         const mainCat = document.getElementById('category').value;
         const subSel = document.getElementById('sub-category');
         subSel.innerHTML = '';
         
-        const catsObj = currentType === 'income' ? INCOME_CATS : EXPENSE_CATS;
+        const catsObj = categories[currentType];
         const subList = catsObj[mainCat] || [];
         
         subList.forEach(sub => {
             const opt = document.createElement('option');
-            opt.value = sub;
-            opt.innerText = sub;
+            opt.value = sub; opt.innerText = sub;
             subSel.appendChild(opt);
         });
     }
@@ -727,6 +698,7 @@
         });
     }
 
+    // --- Modal System ---
     const modalOverlay = document.getElementById('modalOverlay');
     const modalTitle = document.getElementById('modalTitle');
     const modalBody = document.getElementById('modalBody');
@@ -740,23 +712,12 @@
         
         const input = modalBody.querySelector('input');
         if(input) {
-            setTimeout(() => {
-                input.focus();
-                input.select();
-            }, 50);
-            input.onkeydown = (e) => {
-                if(e.key === 'Enter') {
-                    e.preventDefault();
-                    modalConfirmBtn.click();
-                }
-            };
+            setTimeout(() => { input.focus(); input.select(); }, 50);
+            input.onkeydown = (e) => { if(e.key === 'Enter') { e.preventDefault(); modalConfirmBtn.click(); } };
         }
     }
 
-    function closeModal() {
-        modalOverlay.classList.remove('active');
-        modalConfirmBtn.onclick = null;
-    }
+    function closeModal() { modalOverlay.classList.remove('active'); modalConfirmBtn.onclick = null; }
 
     function editBalance(accKey) {
         let currentBal = 0;
@@ -800,6 +761,124 @@
         });
     }
 
+    // --- Settings Modal Logic ---
+    const settingsModal = document.getElementById('settingsModalOverlay');
+    
+    function openSettings() {
+        settingsModal.classList.add('active');
+        selectedSettingsCat = null;
+        renderSettingsCats();
+        renderSettingsSubs();
+    }
+    
+    function closeSettings() {
+        settingsModal.classList.remove('active');
+        // Refresh main UI incase categories changed
+        updateCats();
+    }
+
+    function switchSettingsType(type) {
+        settingsType = type;
+        document.getElementById('set-tab-expense').classList.toggle('active', type === 'expense');
+        document.getElementById('set-tab-income').classList.toggle('active', type === 'income');
+        selectedSettingsCat = null;
+        renderSettingsCats();
+        renderSettingsSubs();
+    }
+
+    function renderSettingsCats() {
+        const list = document.getElementById('settingsCatList');
+        list.innerHTML = '';
+        const cats = categories[settingsType];
+        
+        for (const cat in cats) {
+            const li = document.createElement('li');
+            li.className = 'settings-item ' + (selectedSettingsCat === cat ? 'active' : '');
+            li.innerHTML = `
+                <span onclick="selectSettingsCat('${cat}')" style="flex:1;">${cat}</span>
+                <span class="btn-del-cat" onclick="delSettingsCat('${cat}')">×</span>
+            `;
+            list.appendChild(li);
+        }
+    }
+
+    function selectSettingsCat(cat) {
+        selectedSettingsCat = cat;
+        renderSettingsCats();
+        renderSettingsSubs();
+    }
+
+    function renderSettingsSubs() {
+        const list = document.getElementById('settingsSubList');
+        const headerName = document.getElementById('selectedCatName');
+        const addGroup = document.getElementById('subAddGroup');
+        
+        list.innerHTML = '';
+        
+        if (!selectedSettingsCat) {
+            headerName.innerText = '';
+            addGroup.style.display = 'none';
+            list.innerHTML = '<li style="color:#CCC; text-align:center; padding:20px;">請先選擇左側主分類</li>';
+            return;
+        }
+
+        headerName.innerText = `(${selectedSettingsCat})`;
+        addGroup.style.display = 'flex';
+        
+        const subs = categories[settingsType][selectedSettingsCat] || [];
+        subs.forEach((sub, idx) => {
+            const li = document.createElement('li');
+            li.className = 'settings-item';
+            li.innerHTML = `
+                <span>${sub}</span>
+                <span class="btn-del-cat" onclick="delSettingsSub(${idx})">×</span>
+            `;
+            list.appendChild(li);
+        });
+    }
+
+    function addSettingsCat() {
+        const input = document.getElementById('newCatInput');
+        const val = input.value.trim();
+        if(!val) return;
+        if(categories[settingsType][val]) return alert('分類已存在');
+        
+        categories[settingsType][val] = [];
+        saveCats();
+        renderSettingsCats();
+        input.value = '';
+    }
+
+    function delSettingsCat(cat) {
+        if(!confirm(`確定刪除主分類「${cat}」及其所有細項？`)) return;
+        delete categories[settingsType][cat];
+        if(selectedSettingsCat === cat) selectedSettingsCat = null;
+        saveCats();
+        renderSettingsCats();
+        renderSettingsSubs();
+    }
+
+    function addSettingsSub() {
+        const input = document.getElementById('newSubInput');
+        const val = input.value.trim();
+        if(!val) return;
+        
+        categories[settingsType][selectedSettingsCat].push(val);
+        saveCats();
+        renderSettingsSubs();
+        input.value = '';
+    }
+
+    function delSettingsSub(idx) {
+        categories[settingsType][selectedSettingsCat].splice(idx, 1);
+        saveCats();
+        renderSettingsSubs();
+    }
+
+    function saveCats() {
+        localStorage.setItem('mtf_v7_cats', JSON.stringify(categories));
+    }
+
     function saveData() { localStorage.setItem('mtf_v6_txs', JSON.stringify(transactions)); }
 
     function renderAll() {
@@ -822,21 +901,21 @@
         const container = document.getElementById('accounts-container');
         container.innerHTML = '';
 
-        // Render Total Card (Always on top)
+        // Render Total Card (Always on top, full width)
         const totalAmount = Object.values(bals).reduce((a, b) => a + b, 0);
         const totalDiv = document.createElement('div');
         totalDiv.className = 'acc-card acc-total';
         totalDiv.innerHTML = `<div class="acc-label">💰 總資產</div><div class="acc-val">$${totalAmount.toLocaleString()}</div>`;
         container.appendChild(totalDiv);
 
-        // Render other accounts
-        for(const [k, v] of Object.entries(bals)) {
+        // Render individual accounts in specified order
+        ACCOUNT_ORDER.forEach(k => {
             const div = document.createElement('div');
             div.className = `acc-card acc-${k}`;
             div.onclick = () => editBalance(k);
-            div.innerHTML = `<div class="acc-label">${ACCOUNTS[k]}</div><div class="acc-val">$${v.toLocaleString()}</div>`;
+            div.innerHTML = `<div class="acc-label">${ACCOUNTS[k]}</div><div class="acc-val">$${bals[k].toLocaleString()}</div>`;
             container.appendChild(div);
-        }
+        });
     }
 
     function renderList() {
@@ -850,7 +929,6 @@
             const div = document.createElement('div');
             div.className = `tx-item type-${t.type}`;
             let info = t.type === 'transfer' ? `${ACCOUNTS[t.from]} → ${ACCOUNTS[t.to]}` : `${ACCOUNTS[t.acc]} · ${t.category}`;
-            // Append sub-category if exists
             if(t.subCategory) info += ` - ${t.subCategory}`;
             
             let amtClass = t.type === 'income' ? 'pos' : (t.type === 'expense' ? 'neg' : '');
