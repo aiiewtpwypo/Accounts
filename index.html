@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Milk Tea Finance v9.0 (Cloud Accounts)</title>
+    <title>Milk Tea Finance v9.1 (Smooth UX)</title>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -127,6 +127,19 @@
         }
         .btn-auth:hover { background: var(--primary-dark); transform: translateY(-2px); }
 
+        .btn-reset {
+            padding: 8px 12px;
+            border-radius: 12px;
+            border: 1px solid var(--primary-color);
+            background: white;
+            color: var(--primary-color);
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+        .btn-reset:hover { background: var(--primary-color); color: white; }
+
         /* --- Grid System --- */
         .dashboard-grid {
             display: grid;
@@ -148,35 +161,55 @@
             transition: box-shadow 0.2s, transform 0.2s;
             border: 1px solid rgba(255,255,255,0.5);
         }
+        
         .widget:hover { box-shadow: var(--shadow-hover); z-index: 10; }
 
         .widget-header {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 12px; cursor: grab; padding-bottom: 8px;
-            border-bottom: 2px solid #F8F6F4; flex-shrink: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            cursor: grab;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #F8F6F4;
+            flex-shrink: 0;
         }
         .widget-header:active { cursor: grabbing; }
 
         .widget-title {
-            font-weight: 800; color: var(--primary-dark); font-size: 1.1rem;
-            display: flex; align-items: center; gap: 8px; pointer-events: none;
+            font-weight: 800;
+            color: var(--primary-dark);
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            pointer-events: none;
         }
         
         .drag-handle { color: var(--text-muted); opacity: 0.5; font-size: 1.2rem; margin-right: 10px; }
 
         .resize-handle {
-            position: absolute; bottom: 0; right: 0; width: 20px; height: 20px; cursor: nwse-resize;
+            position: absolute;
+            bottom: 0; right: 0; width: 20px; height: 20px;
+            cursor: nwse-resize;
             background: linear-gradient(135deg, transparent 50%, var(--primary-color) 50%);
             opacity: 0; transition: opacity 0.2s;
-            border-bottom-right-radius: var(--radius-lg); z-index: 20;
+            border-bottom-right-radius: var(--radius-lg);
+            z-index: 20;
         }
         .widget:hover .resize-handle { opacity: 0.8; }
 
-        /* --- Accounts Widget --- */
+        /* --- Widget Content Specifics --- */
+        
+        /* 1. Accounts Widget */
         .accounts-container {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px; height: 100%; overflow-y: auto; padding: 5px; align-content: start;
+            gap: 20px;
+            height: 100%;
+            overflow-y: auto;
+            padding: 5px;
+            align-content: start;
         }
         @media (min-width: 900px) { .accounts-container { grid-template-columns: repeat(4, 1fr); } }
 
@@ -191,36 +224,93 @@
         .acc-taishin { border-left-color: #E60012; }
         .acc-cash { border-left-color: #D4A373; }
         
+        /* 總金額卡片 - 強制佔滿上方 */
         .acc-total { 
             border-left: none;
             background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-            cursor: default; color: white; grid-column: 1 / -1; margin-bottom: 5px;
+            cursor: default;
+            color: white;
+            grid-column: 1 / -1; /* Span full width row */
+            margin-bottom: 5px;
         }
-        .acc-total:hover { transform: none; box-shadow: 0 4px 15px rgba(197, 157, 127, 0.3); background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)) !important; }
+        /* Override hover for total card */
+        .acc-total:hover { 
+            transform: none; 
+            box-shadow: 0 4px 15px rgba(197, 157, 127, 0.3); 
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)) !important;
+        }
         .acc-total .acc-label, .acc-total .acc-val { color: white !important; }
-        .acc-total .acc-val::after { content: none !important; }
+        .acc-total .acc-val::after { content: none !important; } /* No edit icon */
 
-        .acc-val { font-size: 1.5rem; font-weight: 800; color: var(--text-main); margin-top: 10px; position: relative; }
-        .acc-card:not(.acc-total):hover .acc-val::after { content: '✎'; position: absolute; right: 0; font-size: 0.9rem; color: var(--primary-color); }
+        .acc-val { 
+            font-size: 1.5rem; 
+            font-weight: 800; 
+            color: var(--text-main); 
+            margin-top: 10px; 
+            position: relative;
+        }
+        .acc-card:not(.acc-total):hover .acc-val::after {
+            content: '✎'; position: absolute; right: 0; font-size: 0.9rem; color: var(--primary-color);
+        }
         .acc-label { font-size: 0.9rem; color: var(--text-muted); font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
 
-        /* --- Input Widget --- */
-        .input-scroll-area { overflow-y: auto; flex: 1; padding-right: 5px; display: flex; flex-direction: column; justify-content: flex-start; }
-        .type-tabs { display: flex; background: #F4F1EE; border-radius: 10px; padding: 3px; margin-bottom: 10px; flex-shrink: 0; }
-        .tab-btn { flex: 1; padding: 6px; border: none; background: transparent; cursor: pointer; border-radius: 8px; color: var(--text-muted); font-weight: 700; transition:0.2s; font-size: 0.9rem; }
+        /* 2. Input Widget */
+        .input-scroll-area { 
+            overflow-y: auto; 
+            flex: 1; 
+            padding-right: 5px; 
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+        .type-tabs { 
+            display: flex; 
+            background: #F4F1EE; 
+            border-radius: 10px; 
+            padding: 3px; 
+            margin-bottom: 10px; 
+            flex-shrink: 0;
+        }
+        .tab-btn { 
+            flex: 1; padding: 6px;
+            border: none; background: transparent; cursor: pointer; 
+            border-radius: 8px; color: var(--text-muted); font-weight: 700; transition:0.2s; 
+            font-size: 0.9rem;
+        }
         .tab-btn.active { background: #FFF; color: var(--text-main); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .tab-btn[data-type="expense"].active { color: var(--danger-color); }
         .tab-btn[data-type="income"].active { color: var(--success-color); }
         
         .input-group { margin-bottom: 8px; }
         .input-label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 3px; font-weight: 700; }
-        .form-control { width: 100%; padding: 8px 10px; border: 2px solid #F0EAE6; border-radius: 10px; outline: none; background: #FAFAFA; font-size: 0.95rem; height: 38px; }
+        .form-control { 
+            width: 100%; 
+            padding: 8px 10px; 
+            border: 2px solid #F0EAE6; 
+            border-radius: 10px; 
+            outline: none; 
+            background: #FAFAFA; 
+            font-size: 0.95rem; 
+            height: 38px;
+        }
         .form-control:focus { border-color: var(--primary-color); background: #FFF; }
         
-        .btn-submit { width: 100%; padding: 10px; background: var(--primary-color); color: white; border: none; border-radius: 12px; font-weight: 800; cursor: pointer; margin-top: auto; font-size: 1rem; transition: 0.2s; }
+        .btn-submit { 
+            width: 100%; 
+            padding: 10px;
+            background: var(--primary-color); 
+            color: white; border: none; 
+            border-radius: 12px; 
+            font-weight: 800; 
+            cursor: pointer; 
+            margin-top: auto;
+            font-size: 1rem; 
+            transition: 0.2s;
+        }
         .btn-submit:hover { background: var(--primary-dark); transform: translateY(-1px); }
+        .btn-submit:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
 
-        /* --- List Widget --- */
+        /* 3. List Widget */
         .list-controls { margin-bottom: 10px; }
         .search-input { width: 100%; padding: 8px 15px; border-radius: 20px; border: 2px solid #F0EAE6; outline:none; }
         .tx-list { overflow-y: auto; flex: 1; padding-right: 5px; }
@@ -236,10 +326,10 @@
         .tx-amt.neg { color: var(--danger-color); }
         .tx-amt.pos { color: var(--success-color); }
 
-        /* --- Chart Widget --- */
+        /* 4. Chart Widget */
         .chart-wrapper { position: relative; width: 100%; height: 100%; min-height: 250px; }
 
-        /* --- Modals (General & Settings) --- */
+        /* --- Modals --- */
         .custom-modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.3); backdrop-filter: blur(4px);
@@ -247,7 +337,6 @@
             z-index: 1000; opacity: 0; transition: opacity 0.3s;
         }
         .custom-modal-overlay.active { display: flex; opacity: 1; }
-        
         .custom-modal {
             background: white; width: 90%; max-width: 400px;
             border-radius: 20px; padding: 25px;
@@ -256,18 +345,21 @@
             display: flex; flex-direction: column;
         }
         .custom-modal.settings-modal { max-width: 700px; height: 80vh; padding: 0; }
-        
         .custom-modal-overlay.active .custom-modal { transform: scale(1); }
+        
         .modal-title { font-size: 1.2rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 15px; }
         .modal-body { margin-bottom: 20px; color: var(--text-main); font-size: 0.95rem; }
         .modal-input { width: 100%; padding: 12px; border: 2px solid #F0EAE6; border-radius: 12px; font-size: 1.1rem; outline: none; margin-top: 10px; }
         .modal-input:focus { border-color: var(--primary-color); }
         .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: auto; }
-        .modal-btn { padding: 10px 20px; border-radius: 10px; border: none; font-weight: 700; cursor: pointer; }
+        
+        .modal-btn { padding: 10px 20px; border-radius: 10px; border: none; font-weight: 700; cursor: pointer; transition: 0.2s; }
         .modal-btn-cancel { background: #F4F1EE; color: var(--text-muted); }
+        .modal-btn-cancel:hover { background: #E0E0E0; }
         .modal-btn-confirm { background: var(--primary-color); color: white; }
+        .modal-btn-confirm:hover { background: var(--primary-dark); }
 
-        /* Settings Modal Styles */
+        /* Settings specific */
         .settings-header { padding: 20px; border-bottom: 1px solid #F0F0F0; display: flex; justify-content: space-between; align-items: center; }
         .settings-content { flex: 1; display: flex; overflow: hidden; }
         .settings-col { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; }
@@ -278,8 +370,9 @@
         .settings-item.active { background: white; color: var(--primary-color); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .settings-item .btn-del-cat { opacity: 0; color: #CCC; cursor: pointer; font-size: 1.1rem; padding: 2px 6px; }
         .settings-item:hover .btn-del-cat { opacity: 1; }
+        .settings-item .btn-del-cat:hover { color: var(--danger-color); }
         .settings-add { margin-top: 10px; display: flex; gap: 5px; }
-        .settings-add input { flex: 1; padding: 8px; border: 1px solid #E0E0E0; border-radius: 8px; font-size: 0.9rem; }
+        .settings-add input { flex: 1; padding: 8px; border: 1px solid #E0E0E0; border-radius: 8px; font-size: 0.9rem; outline: none; }
         .settings-add button { padding: 8px 12px; background: var(--primary-color); color: white; border: none; border-radius: 8px; cursor: pointer; }
 
         /* Toast */
@@ -324,7 +417,7 @@
 
     <div class="dashboard-grid" id="grid">
         
-        <!-- Widget 1: Accounts (Increased Height) -->
+        <!-- Widget 1: Accounts (Increased Height for overview) -->
         <div class="widget" id="widget-accounts" data-id="accounts" style="grid-column: span 12; grid-row: span 5;">
             <div class="resize-handle"></div>
             <div class="widget-header">
@@ -366,9 +459,7 @@
                     </div>
                     <div class="input-group" id="grp-acc">
                         <label class="input-label" id="lbl-acc">支出帳戶</label>
-                        <select id="account" class="form-control">
-                            <!-- Options populated by JS -->
-                        </select>
+                        <select id="account" class="form-control"></select>
                     </div>
                     <div class="input-group" id="grp-trans" style="display:none;">
                         <label class="input-label">轉出 (From)</label>
@@ -381,7 +472,7 @@
                         <label class="input-label">金額</label>
                         <input type="number" id="amount" class="form-control" placeholder="0" required min="1">
                     </div>
-                    <button class="btn-submit">確認新增</button>
+                    <button type="submit" class="btn-submit" id="addBtn">確認新增</button>
                 </form>
             </div>
         </div>
@@ -416,7 +507,7 @@
     </div>
 </div>
 
-<!-- Standard Modal -->
+<!-- General Modal -->
 <div class="custom-modal-overlay" id="modalOverlay">
     <div class="custom-modal">
         <div class="modal-title" id="modalTitle">標題</div>
@@ -490,7 +581,7 @@
     // --- Firebase Setup ---
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
     import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
-    import { getFirestore, doc, setDoc, onSnapshot, collection } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+    import { getFirestore, doc, setDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
     const firebaseConfig = JSON.parse(__firebase_config);
     const app = initializeApp(firebaseConfig);
@@ -527,16 +618,11 @@
     let chartInstance = null;
     let chartType = 'doughnut';
     let user = null;
-    
-    // Account State
     let currentAccountId = localStorage.getItem('mtf_account_id') || 'guest';
-
-    // Settings State
     let settingsType = 'expense';
     let selectedSettingsCat = null;
 
     // --- 3. Firebase Logic ---
-    
     const initAuth = async () => {
         if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
             await signInWithCustomToken(auth, __initial_auth_token);
@@ -561,25 +647,22 @@
     function subscribeData() {
         if (!user) return;
         
-        // Unsubscribe old listeners if changing account
         if (unsubscribeTx) unsubscribeTx();
         if (unsubscribeCat) unsubscribeCat();
 
-        // Update UI for Auth State
         const authText = currentAccountId === 'guest' ? '登入 / 註冊' : `帳號: ${currentAccountId}`;
         document.getElementById('authBtnText').innerText = authText;
         document.getElementById('authBtnIcon').innerText = currentAccountId === 'guest' ? '👤' : '🟢';
 
-        // Path Strategy: artifacts/{appId}/public/data/milktea_users/{currentAccountId}
-        // This simulates "Private" data by namespacing with a user-provided ID
         const docId = `user_${currentAccountId}`;
         
+        // Use full proper path
         const txDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'milktea_transactions', docId);
         unsubscribeTx = onSnapshot(txDocRef, (docSnap) => {
             if (docSnap.exists()) {
                 transactions = docSnap.data().list || [];
             } else {
-                transactions = []; // New account starts empty
+                transactions = [];
             }
             renderAll();
         }, (error) => {
@@ -598,11 +681,12 @@
         }, (error) => { console.error("Cat error", error); });
     }
 
-    async function saveTransactionsToCloud() {
+    async function saveTransactionsToCloud(callback) {
         if(!user) return;
         try {
             const docId = `user_${currentAccountId}`;
             await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'milktea_transactions', docId), { list: transactions });
+            if(callback) callback();
         } catch(e) {
             console.error("Save error", e);
             showToast("儲存失敗", "error");
@@ -623,7 +707,11 @@
     window.openLoginModal = function() {
         document.getElementById('loginIdInput').value = currentAccountId === 'guest' ? '' : currentAccountId;
         document.getElementById('loginModalOverlay').classList.add('active');
-        setTimeout(() => document.getElementById('loginIdInput').focus(), 100);
+        const input = document.getElementById('loginIdInput');
+        setTimeout(() => { input.focus(); input.select(); }, 100);
+        
+        // Enter key for login
+        input.onkeydown = (e) => { if(e.key === 'Enter') confirmLogin(); };
     };
 
     window.confirmLogin = function() {
@@ -631,10 +719,14 @@
         if(input) {
             currentAccountId = input;
             localStorage.setItem('mtf_account_id', currentAccountId);
-            subscribeData(); // Reload data for new account
+            
+            // Clear current data visually before loading new data
+            transactions = [];
+            renderAll(); 
+            
+            subscribeData();
             showToast(`歡迎回來，${currentAccountId}`, 'success');
         } else {
-            // Switch back to guest
             currentAccountId = 'guest';
             localStorage.removeItem('mtf_account_id');
             subscribeData();
@@ -643,8 +735,7 @@
         document.getElementById('loginModalOverlay').classList.remove('active');
     };
 
-
-    // --- 4. Drag & Resize Logic ---
+    // --- Layout Logic ---
     const grid = document.getElementById('grid');
     const widgets = document.querySelectorAll('.widget');
     let draggedItem = null;
@@ -677,24 +768,23 @@
     }
     
     window.resetLayout = function() {
-        if(confirm('重置版面配置？')) {
+        openModal('確認重置', '確定要重置所有區塊的位置和大小嗎？', () => {
             localStorage.removeItem('mtf_v6_layout');
             location.reload();
-        }
+        });
     };
 
-    // Initialize logic
+    // Initialize
     initAuth();
     initLayout();
     document.getElementById('date').value = new Date().toISOString().split('T')[0];
     populateAccountSelects();
-    // Render empty state immediately so UI isn't blank
     renderAll();
     
     setInterval(updateDateTime, 1000); 
     updateDateTime();
 
-    // Event Listeners for Drag/Resize
+    // Drag events
     widgets.forEach(w => {
         const header = w.querySelector('.widget-header');
         header.addEventListener('mousedown', () => w.setAttribute('draggable', 'true'));
@@ -729,8 +819,7 @@
         window.addEventListener('mousemove', doDrag); window.addEventListener('mouseup', stopDrag);
     }
 
-    // --- 5. Logic Functions ---
-    
+    // --- App Logic ---
     function updateDateTime() {
         const now = new Date(); const days = ['日', '一', '二', '三', '四', '五', '六'];
         document.getElementById('datetime').innerText = `${now.getFullYear()}/${(now.getMonth()+1).toString().padStart(2,'0')}/${now.getDate().toString().padStart(2,'0')} (${days[now.getDay()]}) ${now.toLocaleTimeString('zh-TW', {hour12: false})}`;
@@ -790,13 +879,17 @@
 
     window.addTx = function(e) {
         e.preventDefault();
-        const amt = parseInt(document.getElementById('amount').value);
+        const amtInput = document.getElementById('amount');
+        const descInput = document.getElementById('desc');
+        const addBtn = document.getElementById('addBtn');
+        
+        const amt = parseInt(amtInput.value);
         if(!amt) return;
 
         const tx = {
             id: Date.now(),
             date: document.getElementById('date').value,
-            desc: document.getElementById('desc').value,
+            desc: descInput.value,
             amount: amt,
             type: currentType
         };
@@ -813,12 +906,21 @@
             tx.subCategory = document.getElementById('sub-category').value;
         }
 
+        // Optimistic UI update
         transactions.unshift(tx);
-        saveTransactionsToCloud();
+        renderAll();
         
-        document.getElementById('desc').value = '';
-        document.getElementById('amount').value = '';
-        showToast('新增成功', 'success');
+        // Show loading state
+        addBtn.disabled = true;
+        addBtn.innerText = "處理中...";
+
+        saveTransactionsToCloud(() => {
+            addBtn.disabled = false;
+            addBtn.innerText = "確認新增";
+            descInput.value = '';
+            amtInput.value = '';
+            showToast('新增成功', 'success');
+        });
     };
 
     window.deleteTx = function(id) {
@@ -955,7 +1057,14 @@
             li.innerHTML = `<span>${sub}</span><span class="btn-del-cat" onclick="window.delSettingsSub(${idx})">×</span>`;
             list.appendChild(li);
         });
+        
+        // Settings Sub Add Enter Key
+        const subInput = document.getElementById('newSubInput');
+        subInput.onkeydown = (e) => { if(e.key === 'Enter') addSettingsSub(); };
     }
+    
+    // Settings Cat Add Enter Key
+    document.getElementById('newCatInput').onkeydown = (e) => { if(e.key === 'Enter') addSettingsCat(); };
 
     window.addSettingsCat = function() {
         const input = document.getElementById('newCatInput');
@@ -1069,6 +1178,11 @@
         const ctx = document.getElementById('mainChart').getContext('2d');
         if(chartInstance) chartInstance.destroy();
 
+        if (transactions.length === 0) {
+            // Render Empty State or Simple Chart
+            return;
+        }
+
         const dataMap = {};
         transactions.filter(t => t.type === 'expense').forEach(t => {
             dataMap[t.category] = (dataMap[t.category] || 0) + t.amount;
@@ -1111,7 +1225,7 @@
         }, 3000);
     }
     
-    // Expose functions to window for onclick handlers
+    // Expose functions
     window.renderList = renderList;
 </script>
 
