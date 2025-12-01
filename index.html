@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Milk Tea Finance v6.2</title>
+    <title>Milk Tea Finance v6.3</title>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -175,6 +175,14 @@
         .acc-taishin { border-left-color: #E60012; }
         .acc-cash { border-left-color: #D4A373; }
         
+        /* 總金額卡片樣式 */
+        .acc-total { 
+            border-left-color: var(--primary-dark); 
+            background: linear-gradient(to right bottom, #FFF, #FDF7F2);
+            cursor: default; /* 不可編輯 */
+        }
+        .acc-total:hover { transform: none; background: linear-gradient(to right bottom, #FFF, #FDF7F2); box-shadow: none; }
+
         .acc-val { 
             font-size: 1.4rem; 
             font-weight: 800; 
@@ -182,7 +190,8 @@
             margin-top: 5px; 
             position: relative;
         }
-        .acc-card:hover .acc-val::after {
+        /* 只有可編輯的卡片才顯示編輯提示 */
+        .acc-card:not(.acc-total):hover .acc-val::after {
             content: '✎'; position: absolute; right: 0; font-size: 0.8rem; color: var(--primary-color);
         }
         .acc-label { font-size: 0.85rem; color: var(--text-muted); font-weight: 700; }
@@ -719,6 +728,17 @@
 
         const container = document.getElementById('accounts-container');
         container.innerHTML = '';
+
+        // Calculate Total
+        const totalAmount = Object.values(bals).reduce((a, b) => a + b, 0);
+
+        // Render Total Card
+        const totalDiv = document.createElement('div');
+        totalDiv.className = 'acc-card acc-total';
+        totalDiv.style.cursor = 'default'; // Not editable
+        totalDiv.innerHTML = `<div class="acc-label">💰 總資產</div><div class="acc-val" style="font-size:1.5rem; color:var(--primary-dark);">$${totalAmount.toLocaleString()}</div>`;
+        container.appendChild(totalDiv);
+
         for(const [k, v] of Object.entries(bals)) {
             const div = document.createElement('div');
             div.className = `acc-card acc-${k}`;
