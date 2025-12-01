@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Milk Tea Finance v9.1 (Smooth UX)</title>
+    <title>Milk Tea Finance v9.2 (Stable)</title>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -161,55 +161,35 @@
             transition: box-shadow 0.2s, transform 0.2s;
             border: 1px solid rgba(255,255,255,0.5);
         }
-        
         .widget:hover { box-shadow: var(--shadow-hover); z-index: 10; }
 
         .widget-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-            cursor: grab;
-            padding-bottom: 8px;
-            border-bottom: 2px solid #F8F6F4;
-            flex-shrink: 0;
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 12px; cursor: grab; padding-bottom: 8px;
+            border-bottom: 2px solid #F8F6F4; flex-shrink: 0;
         }
         .widget-header:active { cursor: grabbing; }
 
         .widget-title {
-            font-weight: 800;
-            color: var(--primary-dark);
-            font-size: 1.1rem;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            pointer-events: none;
+            font-weight: 800; color: var(--primary-dark); font-size: 1.1rem;
+            display: flex; align-items: center; gap: 8px; pointer-events: none;
         }
         
         .drag-handle { color: var(--text-muted); opacity: 0.5; font-size: 1.2rem; margin-right: 10px; }
 
         .resize-handle {
-            position: absolute;
-            bottom: 0; right: 0; width: 20px; height: 20px;
-            cursor: nwse-resize;
+            position: absolute; bottom: 0; right: 0; width: 20px; height: 20px; cursor: nwse-resize;
             background: linear-gradient(135deg, transparent 50%, var(--primary-color) 50%);
             opacity: 0; transition: opacity 0.2s;
-            border-bottom-right-radius: var(--radius-lg);
-            z-index: 20;
+            border-bottom-right-radius: var(--radius-lg); z-index: 20;
         }
         .widget:hover .resize-handle { opacity: 0.8; }
 
-        /* --- Widget Content Specifics --- */
-        
-        /* 1. Accounts Widget */
+        /* --- Accounts Widget --- */
         .accounts-container {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            height: 100%;
-            overflow-y: auto;
-            padding: 5px;
-            align-content: start;
+            gap: 20px; height: 100%; overflow-y: auto; padding: 5px; align-content: start;
         }
         @media (min-width: 900px) { .accounts-container { grid-template-columns: repeat(4, 1fr); } }
 
@@ -224,93 +204,36 @@
         .acc-taishin { border-left-color: #E60012; }
         .acc-cash { border-left-color: #D4A373; }
         
-        /* 總金額卡片 - 強制佔滿上方 */
         .acc-total { 
             border-left: none;
             background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-            cursor: default;
-            color: white;
-            grid-column: 1 / -1; /* Span full width row */
-            margin-bottom: 5px;
+            cursor: default; color: white; grid-column: 1 / -1; margin-bottom: 5px;
         }
-        /* Override hover for total card */
-        .acc-total:hover { 
-            transform: none; 
-            box-shadow: 0 4px 15px rgba(197, 157, 127, 0.3); 
-            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)) !important;
-        }
+        .acc-total:hover { transform: none; box-shadow: 0 4px 15px rgba(197, 157, 127, 0.3); background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)) !important; }
         .acc-total .acc-label, .acc-total .acc-val { color: white !important; }
-        .acc-total .acc-val::after { content: none !important; } /* No edit icon */
+        .acc-total .acc-val::after { content: none !important; }
 
-        .acc-val { 
-            font-size: 1.5rem; 
-            font-weight: 800; 
-            color: var(--text-main); 
-            margin-top: 10px; 
-            position: relative;
-        }
-        .acc-card:not(.acc-total):hover .acc-val::after {
-            content: '✎'; position: absolute; right: 0; font-size: 0.9rem; color: var(--primary-color);
-        }
+        .acc-val { font-size: 1.5rem; font-weight: 800; color: var(--text-main); margin-top: 10px; position: relative; }
+        .acc-card:not(.acc-total):hover .acc-val::after { content: '✎'; position: absolute; right: 0; font-size: 0.9rem; color: var(--primary-color); }
         .acc-label { font-size: 0.9rem; color: var(--text-muted); font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
 
-        /* 2. Input Widget */
-        .input-scroll-area { 
-            overflow-y: auto; 
-            flex: 1; 
-            padding-right: 5px; 
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-        }
-        .type-tabs { 
-            display: flex; 
-            background: #F4F1EE; 
-            border-radius: 10px; 
-            padding: 3px; 
-            margin-bottom: 10px; 
-            flex-shrink: 0;
-        }
-        .tab-btn { 
-            flex: 1; padding: 6px;
-            border: none; background: transparent; cursor: pointer; 
-            border-radius: 8px; color: var(--text-muted); font-weight: 700; transition:0.2s; 
-            font-size: 0.9rem;
-        }
+        /* --- Input Widget --- */
+        .input-scroll-area { overflow-y: auto; flex: 1; padding-right: 5px; display: flex; flex-direction: column; justify-content: flex-start; }
+        .type-tabs { display: flex; background: #F4F1EE; border-radius: 10px; padding: 3px; margin-bottom: 10px; flex-shrink: 0; }
+        .tab-btn { flex: 1; padding: 6px; border: none; background: transparent; cursor: pointer; border-radius: 8px; color: var(--text-muted); font-weight: 700; transition:0.2s; font-size: 0.9rem; }
         .tab-btn.active { background: #FFF; color: var(--text-main); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .tab-btn[data-type="expense"].active { color: var(--danger-color); }
         .tab-btn[data-type="income"].active { color: var(--success-color); }
         
         .input-group { margin-bottom: 8px; }
         .input-label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 3px; font-weight: 700; }
-        .form-control { 
-            width: 100%; 
-            padding: 8px 10px; 
-            border: 2px solid #F0EAE6; 
-            border-radius: 10px; 
-            outline: none; 
-            background: #FAFAFA; 
-            font-size: 0.95rem; 
-            height: 38px;
-        }
+        .form-control { width: 100%; padding: 8px 10px; border: 2px solid #F0EAE6; border-radius: 10px; outline: none; background: #FAFAFA; font-size: 0.95rem; height: 38px; }
         .form-control:focus { border-color: var(--primary-color); background: #FFF; }
         
-        .btn-submit { 
-            width: 100%; 
-            padding: 10px;
-            background: var(--primary-color); 
-            color: white; border: none; 
-            border-radius: 12px; 
-            font-weight: 800; 
-            cursor: pointer; 
-            margin-top: auto;
-            font-size: 1rem; 
-            transition: 0.2s;
-        }
+        .btn-submit { width: 100%; padding: 10px; background: var(--primary-color); color: white; border: none; border-radius: 12px; font-weight: 800; cursor: pointer; margin-top: auto; font-size: 1rem; transition: 0.2s; }
         .btn-submit:hover { background: var(--primary-dark); transform: translateY(-1px); }
-        .btn-submit:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
 
-        /* 3. List Widget */
+        /* --- List Widget --- */
         .list-controls { margin-bottom: 10px; }
         .search-input { width: 100%; padding: 8px 15px; border-radius: 20px; border: 2px solid #F0EAE6; outline:none; }
         .tx-list { overflow-y: auto; flex: 1; padding-right: 5px; }
@@ -326,7 +249,7 @@
         .tx-amt.neg { color: var(--danger-color); }
         .tx-amt.pos { color: var(--success-color); }
 
-        /* 4. Chart Widget */
+        /* --- Chart Widget --- */
         .chart-wrapper { position: relative; width: 100%; height: 100%; min-height: 250px; }
 
         /* --- Modals --- */
@@ -405,19 +328,19 @@
             <div class="connection-status" id="connectionStatus" title="雲端連線狀態"></div>
             <div class="datetime-display" id="datetime">Loading...</div>
             
-            <button class="btn-auth" onclick="openLoginModal()">
+            <button class="btn-auth" onclick="window.openLoginModal()">
                 <span id="authBtnIcon">👤</span>
                 <span id="authBtnText">登入 / 註冊</span>
             </button>
             
-            <button class="btn-icon" onclick="openSettings()" title="設定分類與細項">⚙️</button>
-            <button class="btn-icon" onclick="resetLayout()" title="重置版面" style="font-size:1rem;">⟲</button>
+            <button class="btn-icon" onclick="window.openSettings()" title="設定分類與細項">⚙️</button>
+            <button class="btn-icon" onclick="window.resetLayout()" title="重置版面" style="font-size:1rem;">⟲</button>
         </div>
     </header>
 
     <div class="dashboard-grid" id="grid">
         
-        <!-- Widget 1: Accounts (Increased Height for overview) -->
+        <!-- Widget 1: Accounts -->
         <div class="widget" id="widget-accounts" data-id="accounts" style="grid-column: span 12; grid-row: span 5;">
             <div class="resize-handle"></div>
             <div class="widget-header">
@@ -437,11 +360,11 @@
             </div>
             <div class="input-scroll-area">
                 <div class="type-tabs">
-                    <button class="tab-btn active" onclick="setType('expense')" data-type="expense">支出</button>
-                    <button class="tab-btn" onclick="setType('income')" data-type="income">收入</button>
-                    <button class="tab-btn" onclick="setType('transfer')" data-type="transfer">轉帳</button>
+                    <button class="tab-btn active" onclick="window.setType('expense')" data-type="expense">支出</button>
+                    <button class="tab-btn" onclick="window.setType('income')" data-type="income">收入</button>
+                    <button class="tab-btn" onclick="window.setType('transfer')" data-type="transfer">轉帳</button>
                 </div>
-                <form id="txForm" onsubmit="addTx(event)">
+                <form id="txForm" onsubmit="window.addTx(event)">
                     <div class="input-group">
                         <label class="input-label">日期</label>
                         <input type="date" id="date" class="form-control" required>
@@ -449,7 +372,7 @@
                     <div class="input-group" id="grp-cat">
                         <label class="input-label">分類與細項</label>
                         <div style="display: flex; gap: 10px;">
-                            <select id="category" class="form-control" style="flex: 1;" onchange="updateSubCats()"></select>
+                            <select id="category" class="form-control" style="flex: 1;" onchange="window.updateSubCats()"></select>
                             <select id="sub-category" class="form-control" style="flex: 1;"></select>
                         </div>
                     </div>
@@ -459,7 +382,9 @@
                     </div>
                     <div class="input-group" id="grp-acc">
                         <label class="input-label" id="lbl-acc">支出帳戶</label>
-                        <select id="account" class="form-control"></select>
+                        <select id="account" class="form-control">
+                            <!-- Options populated by JS -->
+                        </select>
                     </div>
                     <div class="input-group" id="grp-trans" style="display:none;">
                         <label class="input-label">轉出 (From)</label>
@@ -484,7 +409,7 @@
                 <div class="widget-title"><span class="drag-handle">⋮⋮</span> 🧾 近期交易</div>
             </div>
             <div class="list-controls">
-                <input type="text" id="search" class="search-input" placeholder="🔍 搜尋紀錄..." onkeyup="renderList()">
+                <input type="text" id="search" class="search-input" placeholder="🔍 搜尋紀錄..." onkeyup="window.renderList()">
             </div>
             <div class="tx-list" id="txList"></div>
         </div>
@@ -494,7 +419,7 @@
             <div class="resize-handle"></div>
             <div class="widget-header">
                 <div class="widget-title"><span class="drag-handle">⋮⋮</span> 📊 財務分析 (支出佔比)</div>
-                <select onchange="updateChartType(this.value)" style="border:1px solid #ddd; border-radius:5px; padding:2px; font-size:0.9rem;">
+                <select onchange="window.updateChartType(this.value)" style="border:1px solid #ddd; border-radius:5px; padding:2px; font-size:0.9rem;">
                     <option value="doughnut">圓餅圖</option>
                     <option value="bar">長條圖</option>
                 </select>
@@ -513,7 +438,7 @@
         <div class="modal-title" id="modalTitle">標題</div>
         <div class="modal-body" id="modalBody">內容</div>
         <div class="modal-actions">
-            <button class="modal-btn modal-btn-cancel" onclick="closeModal()">取消</button>
+            <button class="modal-btn modal-btn-cancel" onclick="window.closeModal()">取消</button>
             <button class="modal-btn modal-btn-confirm" id="modalConfirmBtn">確認</button>
         </div>
     </div>
@@ -524,12 +449,12 @@
     <div class="custom-modal settings-modal">
         <div class="settings-header">
             <div class="modal-title" style="margin:0;">⚙️ 分類設定</div>
-            <button class="modal-btn modal-btn-cancel" onclick="closeSettings()">關閉</button>
+            <button class="modal-btn modal-btn-cancel" onclick="window.closeSettings()">關閉</button>
         </div>
         <div style="padding: 10px 20px; border-bottom: 1px solid #F0F0F0;">
             <div class="type-tabs" style="margin:0;">
-                <button class="tab-btn active" id="set-tab-expense" onclick="switchSettingsType('expense')">支出分類</button>
-                <button class="tab-btn" id="set-tab-income" onclick="switchSettingsType('income')">收入分類</button>
+                <button class="tab-btn active" id="set-tab-expense" onclick="window.switchSettingsType('expense')">支出分類</button>
+                <button class="tab-btn" id="set-tab-income" onclick="window.switchSettingsType('income')">收入分類</button>
             </div>
         </div>
         <div class="settings-content">
@@ -539,7 +464,7 @@
                 <ul class="settings-list" id="settingsCatList"></ul>
                 <div class="settings-add">
                     <input type="text" id="newCatInput" placeholder="新增主分類...">
-                    <button onclick="addSettingsCat()">＋</button>
+                    <button onclick="window.addSettingsCat()">＋</button>
                 </div>
             </div>
             <!-- Right Col: Sub Categories -->
@@ -552,7 +477,7 @@
                 </ul>
                 <div class="settings-add" id="subAddGroup" style="display:none;">
                     <input type="text" id="newSubInput" placeholder="新增細項...">
-                    <button onclick="addSettingsSub()">＋</button>
+                    <button onclick="window.addSettingsSub()">＋</button>
                 </div>
             </div>
         </div>
@@ -569,7 +494,7 @@
         </div>
         <div class="modal-actions">
             <button class="modal-btn modal-btn-cancel" onclick="document.getElementById('loginModalOverlay').classList.remove('active')">取消</button>
-            <button class="modal-btn modal-btn-confirm" onclick="confirmLogin()">進入帳號</button>
+            <button class="modal-btn modal-btn-confirm" onclick="window.confirmLogin()">進入帳號</button>
         </div>
     </div>
 </div>
@@ -578,22 +503,43 @@
 <div id="toast-container"></div>
 
 <script type="module">
-    // --- Firebase Setup ---
+    // --- Firebase Imports ---
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
     import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
     import { getFirestore, doc, setDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
-    const firebaseConfig = JSON.parse(__firebase_config);
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'milktea-default';
+    // --- Global Error Handler ---
+    window.onerror = function(message, source, lineno, colno, error) {
+        console.error("Global Error:", message, error);
+        showToast("系統錯誤: " + message, "error");
+    };
 
-    // --- 1. Data Config ---
+    // --- EXPOSE FUNCTIONS TO WINDOW EARLY ---
+    // This ensures UI buttons work even if initialization delays
+    window.showToast = showToast;
+    window.renderList = renderList;
+    window.openLoginModal = openLoginModal;
+    window.confirmLogin = confirmLogin;
+    window.resetLayout = resetLayout;
+    window.setType = setType;
+    window.updateSubCats = updateSubCats;
+    window.addTx = addTx;
+    window.deleteTx = deleteTx;
+    window.closeModal = closeModal;
+    window.openSettings = openSettings;
+    window.closeSettings = closeSettings;
+    window.switchSettingsType = switchSettingsType;
+    window.addSettingsCat = addSettingsCat;
+    window.delSettingsCat = delSettingsCat;
+    window.selectSettingsCat = selectSettingsCat;
+    window.addSettingsSub = addSettingsSub;
+    window.delSettingsSub = delSettingsSub;
+    window.updateChartType = updateChartType;
+
+    // --- Data Config ---
     const ACCOUNT_ORDER = ['ctbc', 'cathay', 'taishin', 'cash'];
     const ACCOUNTS = { ctbc: '中國信託', cathay: '國泰世華', taishin: '台新銀行', cash: '現金' };
     
-    // Default Categories (Fallback)
     const DEFAULT_EXPENSE_CATS = {
         '餐飲': ['早餐', '午餐', '晚餐', '飲料', '零食', '宵夜'],
         '交通': ['捷運', '公車', '計程車', '加油', '停車', '保養'],
@@ -611,7 +557,7 @@
         '其他': ['收禮', '退款', '閒置交易']
     };
     
-    // --- 2. State ---
+    // --- State ---
     let transactions = [];
     let categories = { expense: DEFAULT_EXPENSE_CATS, income: DEFAULT_INCOME_CATS };
     let currentType = 'expense';
@@ -621,15 +567,47 @@
     let currentAccountId = localStorage.getItem('mtf_account_id') || 'guest';
     let settingsType = 'expense';
     let selectedSettingsCat = null;
+    let db, auth, appId;
 
-    // --- 3. Firebase Logic ---
-    const initAuth = async () => {
-        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-            await signInWithCustomToken(auth, __initial_auth_token);
-        } else {
-            await signInAnonymously(auth);
+    // --- Initialization Flow ---
+    try {
+        if (typeof __firebase_config === 'undefined') {
+            throw new Error("Firebase config missing");
         }
-    };
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const app = initializeApp(firebaseConfig);
+        auth = getAuth(app);
+        db = getFirestore(app);
+        appId = typeof __app_id !== 'undefined' ? __app_id : 'milktea-default';
+        
+        initAuth();
+    } catch (e) {
+        console.error("Firebase Init Error", e);
+        showToast("資料庫連線失敗，請重新整理", "error");
+    }
+
+    // Load initial empty UI
+    initLayout();
+    document.getElementById('date').value = new Date().toISOString().split('T')[0];
+    populateAccountSelects();
+    updateCats();
+    renderAll(); // Render empty/loading state immediately
+    setInterval(updateDateTime, 1000); 
+    updateDateTime();
+
+    // --- Firebase Logic ---
+    async function initAuth() {
+        try {
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                await signInWithCustomToken(auth, __initial_auth_token);
+            } else {
+                await signInAnonymously(auth);
+            }
+        } catch(e) {
+            console.error("Auth Error", e);
+            showToast("登入驗證失敗", "error");
+        }
+    }
 
     onAuthStateChanged(auth, (u) => {
         if (u) {
@@ -656,18 +634,19 @@
 
         const docId = `user_${currentAccountId}`;
         
-        // Use full proper path
+        // Use full proper path with even segments
         const txDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'milktea_transactions', docId);
         unsubscribeTx = onSnapshot(txDocRef, (docSnap) => {
             if (docSnap.exists()) {
-                transactions = docSnap.data().list || [];
+                const data = docSnap.data();
+                transactions = data.list || [];
             } else {
                 transactions = [];
             }
             renderAll();
         }, (error) => {
             console.error("Tx snapshot error", error);
-            showToast("連線錯誤", "error");
+            // Don't show toast for permission denied initially, just log
         });
 
         const catDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'milktea_categories', docId);
@@ -682,14 +661,14 @@
     }
 
     async function saveTransactionsToCloud(callback) {
-        if(!user) return;
+        if(!user) { showToast("未連線，無法儲存", "error"); return; }
         try {
             const docId = `user_${currentAccountId}`;
             await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'milktea_transactions', docId), { list: transactions });
             if(callback) callback();
         } catch(e) {
             console.error("Save error", e);
-            showToast("儲存失敗", "error");
+            showToast("儲存失敗: " + e.message, "error");
         }
     }
 
@@ -703,27 +682,23 @@
         }
     }
 
-    // --- Login System ---
-    window.openLoginModal = function() {
+    // --- Logic Implementations ---
+
+    function openLoginModal() {
         document.getElementById('loginIdInput').value = currentAccountId === 'guest' ? '' : currentAccountId;
         document.getElementById('loginModalOverlay').classList.add('active');
         const input = document.getElementById('loginIdInput');
         setTimeout(() => { input.focus(); input.select(); }, 100);
-        
-        // Enter key for login
         input.onkeydown = (e) => { if(e.key === 'Enter') confirmLogin(); };
-    };
+    }
 
-    window.confirmLogin = function() {
+    function confirmLogin() {
         const input = document.getElementById('loginIdInput').value.trim();
         if(input) {
             currentAccountId = input;
             localStorage.setItem('mtf_account_id', currentAccountId);
-            
-            // Clear current data visually before loading new data
-            transactions = [];
-            renderAll(); 
-            
+            transactions = []; // Clear local visual state immediately
+            renderAll();
             subscribeData();
             showToast(`歡迎回來，${currentAccountId}`, 'success');
         } else {
@@ -733,9 +708,9 @@
             showToast('已切換為訪客模式');
         }
         document.getElementById('loginModalOverlay').classList.remove('active');
-    };
+    }
 
-    // --- Layout Logic ---
+    // --- Layout & Drag ---
     const grid = document.getElementById('grid');
     const widgets = document.querySelectorAll('.widget');
     let draggedItem = null;
@@ -744,17 +719,19 @@
     const ROW_HEIGHT = 60; 
 
     function initLayout() {
-        const savedLayout = JSON.parse(localStorage.getItem('mtf_v6_layout'));
-        if (savedLayout) {
-            savedLayout.forEach(conf => {
-                const el = document.querySelector(`.widget[data-id="${conf.id}"]`);
-                if (el) {
-                    el.style.gridColumn = `span ${conf.col}`;
-                    el.style.gridRow = `span ${conf.row}`;
-                    el.style.order = conf.order;
-                }
-            });
-        }
+        try {
+            const savedLayout = JSON.parse(localStorage.getItem('mtf_v6_layout'));
+            if (savedLayout) {
+                savedLayout.forEach(conf => {
+                    const el = document.querySelector(`.widget[data-id="${conf.id}"]`);
+                    if (el) {
+                        el.style.gridColumn = `span ${conf.col}`;
+                        el.style.gridRow = `span ${conf.row}`;
+                        el.style.order = conf.order;
+                    }
+                });
+            }
+        } catch (e) { console.warn("Layout load failed", e); }
     }
     
     function saveLayout() {
@@ -767,24 +744,14 @@
         localStorage.setItem('mtf_v6_layout', JSON.stringify(layout));
     }
     
-    window.resetLayout = function() {
+    function resetLayout() {
         openModal('確認重置', '確定要重置所有區塊的位置和大小嗎？', () => {
             localStorage.removeItem('mtf_v6_layout');
             location.reload();
         });
-    };
+    }
 
-    // Initialize
-    initAuth();
-    initLayout();
-    document.getElementById('date').value = new Date().toISOString().split('T')[0];
-    populateAccountSelects();
-    renderAll();
-    
-    setInterval(updateDateTime, 1000); 
-    updateDateTime();
-
-    // Drag events
+    // Bind Drag Events
     widgets.forEach(w => {
         const header = w.querySelector('.widget-header');
         header.addEventListener('mousedown', () => w.setAttribute('draggable', 'true'));
@@ -819,7 +786,7 @@
         window.addEventListener('mousemove', doDrag); window.addEventListener('mouseup', stopDrag);
     }
 
-    // --- App Logic ---
+    // --- Helpers ---
     function updateDateTime() {
         const now = new Date(); const days = ['日', '一', '二', '三', '四', '五', '六'];
         document.getElementById('datetime').innerText = `${now.getFullYear()}/${(now.getMonth()+1).toString().padStart(2,'0')}/${now.getDate().toString().padStart(2,'0')} (${days[now.getDay()]}) ${now.toLocaleTimeString('zh-TW', {hour12: false})}`;
@@ -832,14 +799,13 @@
             el.innerHTML = '';
             ACCOUNT_ORDER.forEach(key => {
                 const opt = document.createElement('option');
-                opt.value = key;
-                opt.innerText = ACCOUNTS[key];
+                opt.value = key; opt.innerText = ACCOUNTS[key];
                 el.appendChild(opt);
             });
         });
     }
 
-    window.setType = function(t) {
+    function setType(t) {
         currentType = t;
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.type === t));
         const isTransfer = t === 'transfer';
@@ -850,34 +816,36 @@
             document.getElementById('lbl-acc').innerText = t === 'income' ? '存入帳戶' : '支出帳戶';
             updateCats();
         }
-    };
+    }
 
     function updateCats() {
         const sel = document.getElementById('category');
         sel.innerHTML = '';
         const catsObj = categories[currentType]; 
-        for (const cat in catsObj) {
-            const opt = document.createElement('option');
-            opt.value = cat; opt.innerText = cat;
-            sel.appendChild(opt);
+        if(catsObj) {
+            for (const cat in catsObj) {
+                const opt = document.createElement('option');
+                opt.value = cat; opt.innerText = cat;
+                sel.appendChild(opt);
+            }
         }
         updateSubCats();
     }
 
-    window.updateSubCats = function() {
+    function updateSubCats() {
         const mainCat = document.getElementById('category').value;
         const subSel = document.getElementById('sub-category');
         subSel.innerHTML = '';
         const catsObj = categories[currentType];
-        const subList = catsObj[mainCat] || [];
+        const subList = catsObj ? (catsObj[mainCat] || []) : [];
         subList.forEach(sub => {
             const opt = document.createElement('option');
             opt.value = sub; opt.innerText = sub;
             subSel.appendChild(opt);
         });
-    };
+    }
 
-    window.addTx = function(e) {
+    function addTx(e) {
         e.preventDefault();
         const amtInput = document.getElementById('amount');
         const descInput = document.getElementById('desc');
@@ -910,7 +878,6 @@
         transactions.unshift(tx);
         renderAll();
         
-        // Show loading state
         addBtn.disabled = true;
         addBtn.innerText = "處理中...";
 
@@ -921,18 +888,18 @@
             amtInput.value = '';
             showToast('新增成功', 'success');
         });
-    };
+    }
 
-    window.deleteTx = function(id) {
+    function deleteTx(id) {
         openModal('確認刪除', '確定要刪除這筆紀錄嗎？', () => {
             transactions = transactions.filter(t => t.id !== id);
             saveTransactionsToCloud();
             closeModal();
             showToast('已刪除', 'success');
         });
-    };
+    }
 
-    // --- Modal System ---
+    // Modal Helpers
     const modalOverlay = document.getElementById('modalOverlay');
     const modalTitle = document.getElementById('modalTitle');
     const modalBody = document.getElementById('modalBody');
@@ -943,7 +910,6 @@
         modalBody.innerHTML = contentHTML;
         modalConfirmBtn.onclick = onConfirm;
         modalOverlay.classList.add('active');
-        
         const input = modalBody.querySelector('input');
         if(input) {
             setTimeout(() => { input.focus(); input.select(); }, 50);
@@ -951,7 +917,7 @@
         }
     }
 
-    window.closeModal = function() { modalOverlay.classList.remove('active'); modalConfirmBtn.onclick = null; };
+    function closeModal() { modalOverlay.classList.remove('active'); modalConfirmBtn.onclick = null; }
 
     function editBalance(accKey) {
         let currentBal = 0;
@@ -994,48 +960,49 @@
         });
     }
 
-    // --- Settings Modal Logic ---
+    // Settings Modal
     const settingsModal = document.getElementById('settingsModalOverlay');
     
-    window.openSettings = function() {
+    function openSettings() {
         settingsModal.classList.add('active');
         selectedSettingsCat = null;
         renderSettingsCats();
         renderSettingsSubs();
-    };
+    }
     
-    window.closeSettings = function() {
+    function closeSettings() {
         settingsModal.classList.remove('active');
         updateCats();
-    };
+    }
 
-    window.switchSettingsType = function(type) {
+    function switchSettingsType(type) {
         settingsType = type;
         document.getElementById('set-tab-expense').classList.toggle('active', type === 'expense');
         document.getElementById('set-tab-income').classList.toggle('active', type === 'income');
         selectedSettingsCat = null;
         renderSettingsCats();
         renderSettingsSubs();
-    };
+    }
 
     function renderSettingsCats() {
         const list = document.getElementById('settingsCatList');
         list.innerHTML = '';
         const cats = categories[settingsType];
-        
-        for (const cat in cats) {
-            const li = document.createElement('li');
-            li.className = 'settings-item ' + (selectedSettingsCat === cat ? 'active' : '');
-            li.innerHTML = `<span onclick="window.selectSettingsCat('${cat}')" style="flex:1;">${cat}</span><span class="btn-del-cat" onclick="window.delSettingsCat('${cat}')">×</span>`;
-            list.appendChild(li);
+        if(cats) {
+            for (const cat in cats) {
+                const li = document.createElement('li');
+                li.className = 'settings-item ' + (selectedSettingsCat === cat ? 'active' : '');
+                li.innerHTML = `<span onclick="window.selectSettingsCat('${cat}')" style="flex:1;">${cat}</span><span class="btn-del-cat" onclick="window.delSettingsCat('${cat}')">×</span>`;
+                list.appendChild(li);
+            }
         }
     }
 
-    window.selectSettingsCat = function(cat) {
+    function selectSettingsCat(cat) {
         selectedSettingsCat = cat;
         renderSettingsCats();
         renderSettingsSubs();
-    };
+    }
 
     function renderSettingsSubs() {
         const list = document.getElementById('settingsSubList');
@@ -1058,26 +1025,26 @@
             list.appendChild(li);
         });
         
-        // Settings Sub Add Enter Key
+        // Enter key support
         const subInput = document.getElementById('newSubInput');
         subInput.onkeydown = (e) => { if(e.key === 'Enter') addSettingsSub(); };
     }
     
-    // Settings Cat Add Enter Key
     document.getElementById('newCatInput').onkeydown = (e) => { if(e.key === 'Enter') addSettingsCat(); };
 
-    window.addSettingsCat = function() {
+    function addSettingsCat() {
         const input = document.getElementById('newCatInput');
         const val = input.value.trim();
         if(!val) return;
-        if(categories[settingsType][val]) return showToast('分類已存在', 'error');
+        if(categories[settingsType] && categories[settingsType][val]) return showToast('分類已存在', 'error');
+        if(!categories[settingsType]) categories[settingsType] = {};
         categories[settingsType][val] = [];
         saveCategoriesToCloud();
         renderSettingsCats();
         input.value = '';
-    };
+    }
 
-    window.delSettingsCat = function(cat) {
+    function delSettingsCat(cat) {
         openModal('確認刪除', `確定刪除主分類「${cat}」？`, () => {
             delete categories[settingsType][cat];
             if(selectedSettingsCat === cat) selectedSettingsCat = null;
@@ -1086,9 +1053,9 @@
             renderSettingsSubs();
             closeModal();
         });
-    };
+    }
 
-    window.addSettingsSub = function() {
+    function addSettingsSub() {
         const input = document.getElementById('newSubInput');
         const val = input.value.trim();
         if(!val) return;
@@ -1096,15 +1063,15 @@
         saveCategoriesToCloud();
         renderSettingsSubs();
         input.value = '';
-    };
+    }
 
-    window.delSettingsSub = function(idx) {
+    function delSettingsSub(idx) {
         categories[settingsType][selectedSettingsCat].splice(idx, 1);
         saveCategoriesToCloud();
         renderSettingsSubs();
-    };
+    }
 
-    // --- Rendering ---
+    // --- Render All ---
     function renderAll() {
         renderAccounts();
         renderList();
@@ -1147,6 +1114,11 @@
         
         const filtered = transactions.filter(t => t.desc.toLowerCase().includes(search) || t.category.includes(search));
         
+        if (filtered.length === 0) {
+            listEl.innerHTML = '<div style="text-align:center; padding:20px; color:#ccc;">無資料</div>';
+            return;
+        }
+
         filtered.slice(0, 100).forEach(t => {
             const div = document.createElement('div');
             div.className = `tx-item type-${t.type}`;
@@ -1169,7 +1141,7 @@
         });
     }
 
-    window.updateChartType = function(t) {
+    function updateChartType(t) {
         chartType = t;
         renderChart();
     }
@@ -1179,7 +1151,6 @@
         if(chartInstance) chartInstance.destroy();
 
         if (transactions.length === 0) {
-            // Render Empty State or Simple Chart
             return;
         }
 
@@ -1224,9 +1195,6 @@
             setTimeout(() => div.remove(), 300);
         }, 3000);
     }
-    
-    // Expose functions
-    window.renderList = renderList;
 </script>
 
 </body>
