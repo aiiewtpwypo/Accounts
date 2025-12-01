@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Milk Tea Finance v7.0</title>
+    <title>Milk Tea Finance v8.2 (Fixed Auth)</title>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -93,6 +93,12 @@
             letter-spacing: 0.5px;
         }
         .datetime-display::before { content: '🕒'; font-size: 1.1rem; }
+
+        .connection-status {
+            width: 10px; height: 10px; border-radius: 50%;
+            background-color: #CCC; transition: background-color 0.3s;
+        }
+        .connection-status.online { background-color: var(--success-color); box-shadow: 0 0 5px var(--success-color); }
 
         .btn-icon {
             width: 40px; height: 40px;
@@ -298,6 +304,13 @@
         .settings-add input { flex: 1; padding: 8px; border: 1px solid #E0E0E0; border-radius: 8px; font-size: 0.9rem; }
         .settings-add button { padding: 8px 12px; background: var(--primary-color); color: white; border: none; border-radius: 8px; cursor: pointer; }
 
+        /* Toast */
+        #toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+        .toast { background: white; padding: 12px 20px; border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 10px; animation: slideIn 0.3s ease-out; min-width: 250px; border-left: 5px solid var(--primary-color); }
+        .toast.success { border-left-color: var(--success-color); }
+        .toast.error { border-left-color: var(--danger-color); }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
         @media (max-width: 768px) {
             .dashboard-grid { display: flex; flex-direction: column; height: auto; }
             .widget { height: auto !important; min-height: 300px; }
@@ -318,6 +331,7 @@
             <h1>Milk Tea Finance</h1>
         </div>
         <div class="header-right">
+            <div class="connection-status" id="connectionStatus" title="雲端連線狀態"></div>
             <div class="datetime-display" id="datetime">Loading...</div>
             <button class="btn-icon" onclick="openSettings()" title="設定分類與細項">⚙️</button>
             <button class="btn-reset" onclick="resetLayout()" title="若版面跑掉請點此">⟲ 重置版面</button>
@@ -470,12 +484,26 @@
     </div>
 </div>
 
-<script>
+<!-- Toast Container -->
+<div id="toast-container"></div>
+
+<script type="module">
+    // --- Firebase Setup ---
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
+    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+    import { getFirestore, doc, setDoc, onSnapshot, collection } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+
+    const firebaseConfig = JSON.parse(__firebase_config);
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'milktea-default';
+
     // --- 1. Data Config ---
     const ACCOUNT_ORDER = ['ctbc', 'cathay', 'taishin', 'cash'];
     const ACCOUNTS = { ctbc: '中國信託', cathay: '國泰世華', taishin: '台新銀行', cash: '現金' };
     
-    // Default Categories
+    // Default Categories (Fallback)
     const DEFAULT_EXPENSE_CATS = {
         '餐飲': ['早餐', '午餐', '晚餐', '飲料', '零食', '宵夜'],
         '交通': ['捷運', '公車', '計程車', '加油', '停車', '保養'],
@@ -493,25 +521,89 @@
         '其他': ['收禮', '退款', '閒置交易']
     };
     
-    // --- 2. State & Storage ---
-    // Load Transactions
-    let transactions = JSON.parse(localStorage.getItem('mtf_v6_txs')) || [];
-    
-    // Load Categories (or use default)
-    let categories = JSON.parse(localStorage.getItem('mtf_v7_cats')) || {
-        expense: DEFAULT_EXPENSE_CATS,
-        income: DEFAULT_INCOME_CATS
-    };
-
+    // --- 2. State ---
+    let transactions = [];
+    let categories = { expense: DEFAULT_EXPENSE_CATS, income: DEFAULT_INCOME_CATS };
     let currentType = 'expense';
     let chartInstance = null;
     let chartType = 'doughnut';
+    let user = null;
 
     // Settings State
     let settingsType = 'expense';
     let selectedSettingsCat = null;
 
-    // --- 3. Drag & Resize Logic ---
+    // --- 3. Firebase Logic ---
+    
+    const initAuth = async () => {
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+            await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+            await signInAnonymously(auth);
+        }
+    };
+
+    onAuthStateChanged(auth, (u) => {
+        if (u) {
+            user = u;
+            document.getElementById('connectionStatus').classList.add('online');
+            subscribeData();
+        } else {
+            document.getElementById('connectionStatus').classList.remove('online');
+        }
+    });
+
+    function subscribeData() {
+        if (!user) return;
+        // Sync Transactions - FIXED PATH
+        const txDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'milktea_transactions', 'main_record');
+        onSnapshot(txDocRef, (docSnap) => {
+            if (docSnap.exists()) {
+                transactions = docSnap.data().list || [];
+            } else {
+                transactions = [];
+            }
+            renderAll();
+        }, (error) => {
+            console.error("Tx snapshot error", error);
+            showToast("無法讀取交易紀錄: " + error.code, "error");
+        });
+
+        // Sync Categories - FIXED PATH
+        const catDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'milktea_categories', 'main_record');
+        onSnapshot(catDocRef, (docSnap) => {
+            if (docSnap.exists()) {
+                categories = docSnap.data();
+            } else {
+                categories = { expense: DEFAULT_EXPENSE_CATS, income: DEFAULT_INCOME_CATS };
+            }
+            updateCats(); // Refresh UI
+        }, (error) => {
+            console.error("Cat snapshot error", error);
+        });
+    }
+
+    async function saveTransactionsToCloud() {
+        if(!user) return;
+        try {
+            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'milktea_transactions', 'main_record'), { list: transactions });
+        } catch(e) {
+            console.error("Save error", e);
+            showToast("儲存失敗: " + e.code, "error");
+        }
+    }
+
+    async function saveCategoriesToCloud() {
+        if(!user) return;
+        try {
+            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'milktea_categories', 'main_record'), categories);
+        } catch(e) {
+            console.error("Save error", e);
+            showToast("分類儲存失敗", "error");
+        }
+    }
+
+    // --- 4. Drag & Resize Logic (Layout local only) ---
     const grid = document.getElementById('grid');
     const widgets = document.querySelectorAll('.widget');
     let draggedItem = null;
@@ -543,13 +635,23 @@
         localStorage.setItem('mtf_v6_layout', JSON.stringify(layout));
     }
     
-    function resetLayout() {
-        if(confirm('確定要重置所有區塊的位置和大小嗎？')) {
+    window.resetLayout = function() {
+        openModal('確認重置', '確定要重置所有區塊的位置和大小嗎？', () => {
             localStorage.removeItem('mtf_v6_layout');
             location.reload();
-        }
-    }
+        });
+    };
 
+    // Initialize logic
+    initAuth();
+    initLayout();
+    document.getElementById('date').value = new Date().toISOString().split('T')[0];
+    populateAccountSelects();
+    // Start Clock
+    setInterval(updateDateTime, 1000); 
+    updateDateTime();
+
+    // Event Listeners for Drag/Resize
     widgets.forEach(w => {
         const header = w.querySelector('.widget-header');
         header.addEventListener('mousedown', () => w.setAttribute('draggable', 'true'));
@@ -584,20 +686,12 @@
         window.addEventListener('mousemove', doDrag); window.addEventListener('mouseup', stopDrag);
     }
 
-    // --- 4. App Logic ---
+    // --- 5. Logic Functions ---
     
     function updateDateTime() {
         const now = new Date(); const days = ['日', '一', '二', '三', '四', '五', '六'];
         document.getElementById('datetime').innerText = `${now.getFullYear()}/${(now.getMonth()+1).toString().padStart(2,'0')}/${now.getDate().toString().padStart(2,'0')} (${days[now.getDay()]}) ${now.toLocaleTimeString('zh-TW', {hour12: false})}`;
     }
-    setInterval(updateDateTime, 1000); updateDateTime();
-
-    // Init
-    initLayout();
-    document.getElementById('date').value = new Date().toISOString().split('T')[0];
-    populateAccountSelects();
-    updateCats(); // Initial population
-    renderAll();
 
     function populateAccountSelects() {
         const selects = ['account', 'fromAccount', 'toAccount'];
@@ -613,27 +707,23 @@
         });
     }
 
-    function setType(t) {
+    window.setType = function(t) {
         currentType = t;
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.type === t));
-        
         const isTransfer = t === 'transfer';
         document.getElementById('grp-cat').style.display = isTransfer ? 'none' : 'block';
         document.getElementById('grp-acc').style.display = isTransfer ? 'none' : 'block';
         document.getElementById('grp-trans').style.display = isTransfer ? 'block' : 'none';
-        
         if(!isTransfer) {
             document.getElementById('lbl-acc').innerText = t === 'income' ? '存入帳戶' : '支出帳戶';
             updateCats();
         }
-    }
+    };
 
     function updateCats() {
         const sel = document.getElementById('category');
         sel.innerHTML = '';
-        // Use dynamic categories from state
         const catsObj = categories[currentType]; 
-        
         for (const cat in catsObj) {
             const opt = document.createElement('option');
             opt.value = cat; opt.innerText = cat;
@@ -642,22 +732,20 @@
         updateSubCats();
     }
 
-    function updateSubCats() {
+    window.updateSubCats = function() {
         const mainCat = document.getElementById('category').value;
         const subSel = document.getElementById('sub-category');
         subSel.innerHTML = '';
-        
         const catsObj = categories[currentType];
         const subList = catsObj[mainCat] || [];
-        
         subList.forEach(sub => {
             const opt = document.createElement('option');
             opt.value = sub; opt.innerText = sub;
             subSel.appendChild(opt);
         });
-    }
+    };
 
-    function addTx(e) {
+    window.addTx = function(e) {
         e.preventDefault();
         const amt = parseInt(document.getElementById('amount').value);
         if(!amt) return;
@@ -673,7 +761,7 @@
         if(currentType === 'transfer') {
             tx.from = document.getElementById('fromAccount').value;
             tx.to = document.getElementById('toAccount').value;
-            if(tx.from === tx.to) return alert('帳戶相同');
+            if(tx.from === tx.to) return showToast('帳戶相同', 'error');
             tx.category = '轉帳';
             tx.subCategory = '';
         } else {
@@ -683,20 +771,21 @@
         }
 
         transactions.unshift(tx);
-        saveData();
-        renderAll();
+        saveTransactionsToCloud();
+        
         document.getElementById('desc').value = '';
         document.getElementById('amount').value = '';
-    }
+        showToast('新增成功', 'success');
+    };
 
-    function deleteTx(id) {
+    window.deleteTx = function(id) {
         openModal('確認刪除', '確定要刪除這筆紀錄嗎？', () => {
             transactions = transactions.filter(t => t.id !== id);
-            saveData();
-            renderAll();
+            saveTransactionsToCloud();
             closeModal();
+            showToast('已刪除', 'success');
         });
-    }
+    };
 
     // --- Modal System ---
     const modalOverlay = document.getElementById('modalOverlay');
@@ -717,7 +806,7 @@
         }
     }
 
-    function closeModal() { modalOverlay.classList.remove('active'); modalConfirmBtn.onclick = null; }
+    window.closeModal = function() { modalOverlay.classList.remove('active'); modalConfirmBtn.onclick = null; };
 
     function editBalance(accKey) {
         let currentBal = 0;
@@ -754,8 +843,7 @@
                     subCategory: '修正'
                 };
                 transactions.unshift(tx);
-                saveData();
-                renderAll();
+                saveTransactionsToCloud();
             }
             closeModal();
         });
@@ -764,27 +852,26 @@
     // --- Settings Modal Logic ---
     const settingsModal = document.getElementById('settingsModalOverlay');
     
-    function openSettings() {
+    window.openSettings = function() {
         settingsModal.classList.add('active');
         selectedSettingsCat = null;
         renderSettingsCats();
         renderSettingsSubs();
-    }
+    };
     
-    function closeSettings() {
+    window.closeSettings = function() {
         settingsModal.classList.remove('active');
-        // Refresh main UI incase categories changed
         updateCats();
-    }
+    };
 
-    function switchSettingsType(type) {
+    window.switchSettingsType = function(type) {
         settingsType = type;
         document.getElementById('set-tab-expense').classList.toggle('active', type === 'expense');
         document.getElementById('set-tab-income').classList.toggle('active', type === 'income');
         selectedSettingsCat = null;
         renderSettingsCats();
         renderSettingsSubs();
-    }
+    };
 
     function renderSettingsCats() {
         const list = document.getElementById('settingsCatList');
@@ -794,93 +881,78 @@
         for (const cat in cats) {
             const li = document.createElement('li');
             li.className = 'settings-item ' + (selectedSettingsCat === cat ? 'active' : '');
-            li.innerHTML = `
-                <span onclick="selectSettingsCat('${cat}')" style="flex:1;">${cat}</span>
-                <span class="btn-del-cat" onclick="delSettingsCat('${cat}')">×</span>
-            `;
+            li.innerHTML = `<span onclick="window.selectSettingsCat('${cat}')" style="flex:1;">${cat}</span><span class="btn-del-cat" onclick="window.delSettingsCat('${cat}')">×</span>`;
             list.appendChild(li);
         }
     }
 
-    function selectSettingsCat(cat) {
+    window.selectSettingsCat = function(cat) {
         selectedSettingsCat = cat;
         renderSettingsCats();
         renderSettingsSubs();
-    }
+    };
 
     function renderSettingsSubs() {
         const list = document.getElementById('settingsSubList');
         const headerName = document.getElementById('selectedCatName');
         const addGroup = document.getElementById('subAddGroup');
-        
         list.innerHTML = '';
-        
         if (!selectedSettingsCat) {
             headerName.innerText = '';
             addGroup.style.display = 'none';
             list.innerHTML = '<li style="color:#CCC; text-align:center; padding:20px;">請先選擇左側主分類</li>';
             return;
         }
-
         headerName.innerText = `(${selectedSettingsCat})`;
         addGroup.style.display = 'flex';
-        
         const subs = categories[settingsType][selectedSettingsCat] || [];
         subs.forEach((sub, idx) => {
             const li = document.createElement('li');
             li.className = 'settings-item';
-            li.innerHTML = `
-                <span>${sub}</span>
-                <span class="btn-del-cat" onclick="delSettingsSub(${idx})">×</span>
-            `;
+            li.innerHTML = `<span>${sub}</span><span class="btn-del-cat" onclick="window.delSettingsSub(${idx})">×</span>`;
             list.appendChild(li);
         });
     }
 
-    function addSettingsCat() {
+    window.addSettingsCat = function() {
         const input = document.getElementById('newCatInput');
         const val = input.value.trim();
         if(!val) return;
-        if(categories[settingsType][val]) return alert('分類已存在');
-        
+        if(categories[settingsType][val]) return showToast('分類已存在', 'error');
         categories[settingsType][val] = [];
-        saveCats();
+        saveCategoriesToCloud();
         renderSettingsCats();
         input.value = '';
-    }
+    };
 
-    function delSettingsCat(cat) {
-        if(!confirm(`確定刪除主分類「${cat}」及其所有細項？`)) return;
-        delete categories[settingsType][cat];
-        if(selectedSettingsCat === cat) selectedSettingsCat = null;
-        saveCats();
-        renderSettingsCats();
-        renderSettingsSubs();
-    }
+    window.delSettingsCat = function(cat) {
+        openModal('確認刪除', `確定刪除主分類「${cat}」？`, () => {
+            delete categories[settingsType][cat];
+            if(selectedSettingsCat === cat) selectedSettingsCat = null;
+            saveCategoriesToCloud();
+            renderSettingsCats();
+            renderSettingsSubs();
+            closeModal();
+        });
+    };
 
-    function addSettingsSub() {
+    window.addSettingsSub = function() {
         const input = document.getElementById('newSubInput');
         const val = input.value.trim();
         if(!val) return;
-        
         categories[settingsType][selectedSettingsCat].push(val);
-        saveCats();
+        saveCategoriesToCloud();
         renderSettingsSubs();
         input.value = '';
-    }
+    };
 
-    function delSettingsSub(idx) {
+    window.delSettingsSub = function(idx) {
         categories[settingsType][selectedSettingsCat].splice(idx, 1);
-        saveCats();
+        saveCategoriesToCloud();
         renderSettingsSubs();
-    }
+    };
 
-    function saveCats() {
-        localStorage.setItem('mtf_v7_cats', JSON.stringify(categories));
-    }
-
-    function saveData() { localStorage.setItem('mtf_v6_txs', JSON.stringify(transactions)); }
-
+    // --- Rendering ---
     function renderAll() {
         renderAccounts();
         renderList();
@@ -901,14 +973,12 @@
         const container = document.getElementById('accounts-container');
         container.innerHTML = '';
 
-        // Render Total Card (Always on top, full width)
         const totalAmount = Object.values(bals).reduce((a, b) => a + b, 0);
         const totalDiv = document.createElement('div');
         totalDiv.className = 'acc-card acc-total';
         totalDiv.innerHTML = `<div class="acc-label">💰 總資產</div><div class="acc-val">$${totalAmount.toLocaleString()}</div>`;
         container.appendChild(totalDiv);
 
-        // Render individual accounts in specified order
         ACCOUNT_ORDER.forEach(k => {
             const div = document.createElement('div');
             div.className = `acc-card acc-${k}`;
@@ -930,7 +1000,6 @@
             div.className = `tx-item type-${t.type}`;
             let info = t.type === 'transfer' ? `${ACCOUNTS[t.from]} → ${ACCOUNTS[t.to]}` : `${ACCOUNTS[t.acc]} · ${t.category}`;
             if(t.subCategory) info += ` - ${t.subCategory}`;
-            
             let amtClass = t.type === 'income' ? 'pos' : (t.type === 'expense' ? 'neg' : '');
             let sign = t.type === 'income' ? '+' : (t.type === 'expense' ? '-' : '');
             
@@ -941,14 +1010,14 @@
                 </div>
                 <div style="display:flex;align-items:center;gap:10px;">
                     <span class="tx-amt ${amtClass}">${sign}$${t.amount.toLocaleString()}</span>
-                    <button style="border:none;background:none;color:#ddd;cursor:pointer;" onclick="deleteTx(${t.id})">×</button>
+                    <button style="border:none;background:none;color:#ddd;cursor:pointer;" onclick="window.deleteTx(${t.id})">×</button>
                 </div>
             `;
             listEl.appendChild(div);
         });
     }
 
-    function updateChartType(t) {
+    window.updateChartType = function(t) {
         chartType = t;
         renderChart();
     }
@@ -985,6 +1054,22 @@
             }
         });
     }
+
+    function showToast(msg, type = 'normal') {
+        const container = document.getElementById('toast-container');
+        const div = document.createElement('div');
+        div.className = `toast ${type}`;
+        div.innerHTML = `<span>${type==='success'?'✅':type==='error'?'⚠️':'💬'}</span> ${msg}`;
+        container.appendChild(div);
+        setTimeout(() => {
+            div.style.opacity = '0';
+            div.style.transform = 'translateX(100%)';
+            setTimeout(() => div.remove(), 300);
+        }, 3000);
+    }
+    
+    // Expose functions to window for onclick handlers
+    window.renderList = renderList;
 </script>
 
 </body>
