@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Milk Tea Finance v6</title>
+    <title>Milk Tea Finance v6.2</title>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -20,6 +20,8 @@
             --transfer-color: #8D99AE;
             
             --radius-lg: 24px;
+            --radius-md: 16px;
+            --radius-sm: 12px;
             --shadow-soft: 0 10px 40px -10px rgba(197, 157, 127, 0.15);
             --shadow-hover: 0 20px 50px -12px rgba(197, 157, 127, 0.25);
             
@@ -70,12 +72,6 @@
             margin: 0;
         }
         
-        .header-right {
-            display: flex;
-            align-items: center;
-        }
-
-        /* 優化後的時間顯示 */
         .datetime-display {
             font-family: 'Nunito', 'Noto Sans TC', monospace;
             font-weight: 700;
@@ -91,10 +87,7 @@
             gap: 10px;
             letter-spacing: 0.5px;
         }
-        .datetime-display::before {
-            content: '🕒';
-            font-size: 1.1rem;
-        }
+        .datetime-display::before { content: '🕒'; font-size: 1.1rem; }
 
         /* --- Grid System --- */
         .dashboard-grid {
@@ -118,18 +111,15 @@
             border: 1px solid rgba(255,255,255,0.5);
         }
         
-        .widget:hover {
-            box-shadow: var(--shadow-hover);
-            z-index: 10;
-        }
+        .widget:hover { box-shadow: var(--shadow-hover); z-index: 10; }
 
         .widget-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             cursor: grab;
-            padding-bottom: 10px;
+            padding-bottom: 8px;
             border-bottom: 2px solid #F8F6F4;
             flex-shrink: 0;
         }
@@ -145,23 +135,14 @@
             pointer-events: none;
         }
         
-        .drag-handle {
-            color: var(--text-muted);
-            opacity: 0.5;
-            font-size: 1.2rem;
-            margin-right: 10px;
-        }
+        .drag-handle { color: var(--text-muted); opacity: 0.5; font-size: 1.2rem; margin-right: 10px; }
 
         .resize-handle {
             position: absolute;
-            bottom: 0;
-            right: 0;
-            width: 20px;
-            height: 20px;
+            bottom: 0; right: 0; width: 20px; height: 20px;
             cursor: nwse-resize;
             background: linear-gradient(135deg, transparent 50%, var(--primary-color) 50%);
-            opacity: 0;
-            transition: opacity 0.2s;
+            opacity: 0; transition: opacity 0.2s;
             border-bottom-right-radius: var(--radius-lg);
             z-index: 20;
         }
@@ -186,8 +167,9 @@
             flex-direction: column;
             justify-content: space-between;
             transition: transform 0.2s;
+            cursor: pointer;
         }
-        .acc-card:hover { transform: translateY(-2px); }
+        .acc-card:hover { transform: translateY(-2px); background: #FFF; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
         .acc-ctbc { border-left-color: #009E96; }
         .acc-cathay { border-left-color: #26A600; }
         .acc-taishin { border-left-color: #E60012; }
@@ -198,61 +180,110 @@
             font-weight: 800; 
             color: var(--text-main); 
             margin-top: 5px; 
-            cursor: pointer; /* Important for indication */
-            padding: 2px 5px;
-            border-radius: 5px;
-            transition: background 0.2s;
-            width: fit-content;
+            position: relative;
         }
-        .acc-val:hover {
-            background: rgba(0,0,0,0.05);
-            color: var(--primary-dark);
+        .acc-card:hover .acc-val::after {
+            content: '✎'; position: absolute; right: 0; font-size: 0.8rem; color: var(--primary-color);
         }
-        .acc-val::after {
-            content: '✎';
-            font-size: 0.8rem;
-            opacity: 0;
-            margin-left: 5px;
-            vertical-align: middle;
-            color: var(--text-muted);
-            transition: opacity 0.2s;
-        }
-        .acc-val:hover::after { opacity: 1; }
+        .acc-label { font-size: 0.85rem; color: var(--text-muted); font-weight: 700; }
 
-        .acc-label { font-size: 0.85rem; color: var(--text-muted); font-weight: 700; display:flex; justify-content:space-between; }
-
-        /* 2. Input Widget */
-        .input-scroll-area { overflow-y: auto; flex: 1; padding-right: 5px; }
-        .type-tabs { display: flex; background: #F4F1EE; border-radius: 12px; padding: 4px; margin-bottom: 15px; }
-        .tab-btn { flex: 1; padding: 8px; border: none; background: transparent; cursor: pointer; border-radius: 8px; color: var(--text-muted); font-weight: 700; transition:0.2s; }
+        /* 2. Input Widget (Compact Mode) */
+        .input-scroll-area { 
+            overflow-y: auto; 
+            flex: 1; 
+            padding-right: 5px; 
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+        .type-tabs { 
+            display: flex; 
+            background: #F4F1EE; 
+            border-radius: 10px; 
+            padding: 3px; 
+            margin-bottom: 10px; 
+            flex-shrink: 0;
+        }
+        .tab-btn { 
+            flex: 1; padding: 6px;
+            border: none; background: transparent; cursor: pointer; 
+            border-radius: 8px; color: var(--text-muted); font-weight: 700; transition:0.2s; 
+            font-size: 0.9rem;
+        }
         .tab-btn.active { background: #FFF; color: var(--text-main); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .tab-btn[data-type="expense"].active { color: var(--danger-color); }
         .tab-btn[data-type="income"].active { color: var(--success-color); }
-        .input-group { margin-bottom: 12px; }
-        .input-label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 5px; font-weight: 700; }
-        .form-control { width: 100%; padding: 10px; border: 2px solid #F0EAE6; border-radius: 10px; outline: none; background: #FAFAFA; font-size: 1rem; }
+        
+        .input-group { margin-bottom: 8px; }
+        .input-label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 3px; font-weight: 700; }
+        .form-control { 
+            width: 100%; 
+            padding: 8px 10px; 
+            border: 2px solid #F0EAE6; 
+            border-radius: 10px; 
+            outline: none; 
+            background: #FAFAFA; 
+            font-size: 0.95rem; 
+            height: 38px;
+        }
         .form-control:focus { border-color: var(--primary-color); background: #FFF; }
-        .btn-submit { width: 100%; padding: 12px; background: var(--primary-color); color: white; border: none; border-radius: 12px; font-weight: 800; cursor: pointer; margin-top: 10px; font-size: 1rem; }
-        .btn-submit:hover { background: var(--primary-dark); }
+        
+        .btn-submit { 
+            width: 100%; 
+            padding: 10px;
+            background: var(--primary-color); 
+            color: white; border: none; 
+            border-radius: 12px; 
+            font-weight: 800; 
+            cursor: pointer; 
+            margin-top: auto;
+            font-size: 1rem; 
+            transition: 0.2s;
+        }
+        .btn-submit:hover { background: var(--primary-dark); transform: translateY(-1px); }
 
         /* 3. List Widget */
         .list-controls { margin-bottom: 10px; }
         .search-input { width: 100%; padding: 8px 15px; border-radius: 20px; border: 2px solid #F0EAE6; outline:none; }
         .tx-list { overflow-y: auto; flex: 1; padding-right: 5px; }
-        .tx-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #FAFAFA; border-radius: 12px; margin-bottom: 8px; transition: 0.2s; border-left: 4px solid transparent; }
+        .tx-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: #FAFAFA; border-radius: 12px; margin-bottom: 6px; transition: 0.2s; border-left: 4px solid transparent; }
         .tx-item:hover { background: #FFF; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
         .type-expense { border-left-color: var(--danger-color); }
         .type-income { border-left-color: var(--success-color); }
         .type-transfer { border-left-color: var(--transfer-color); }
-        .tx-info h4 { font-size: 0.95rem; color: var(--text-main); margin-bottom: 2px; }
+        .tx-info h4 { font-size: 0.9rem; color: var(--text-main); margin-bottom: 2px; }
         .tx-info p { font-size: 0.75rem; color: var(--text-muted); display: flex; align-items: center; gap: 5px; }
         .tx-badge { background: #EAEAEA; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; }
-        .tx-amt { font-weight: 800; font-size: 1rem; }
+        .tx-amt { font-weight: 800; font-size: 0.95rem; }
         .tx-amt.neg { color: var(--danger-color); }
         .tx-amt.pos { color: var(--success-color); }
 
         /* 4. Chart Widget */
         .chart-wrapper { position: relative; width: 100%; height: 100%; min-height: 250px; }
+
+        /* --- Custom Modal --- */
+        .custom-modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.3); backdrop-filter: blur(4px);
+            display: none; align-items: center; justify-content: center;
+            z-index: 1000; opacity: 0; transition: opacity 0.3s;
+        }
+        .custom-modal-overlay.active { display: flex; opacity: 1; }
+        .custom-modal {
+            background: white; width: 90%; max-width: 400px;
+            border-radius: 20px; padding: 25px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.1);
+            transform: scale(0.9); transition: transform 0.3s;
+        }
+        .custom-modal-overlay.active .custom-modal { transform: scale(1); }
+        .modal-title { font-size: 1.2rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 15px; }
+        .modal-body { margin-bottom: 20px; color: var(--text-main); font-size: 0.95rem; }
+        .modal-input { width: 100%; padding: 12px; border: 2px solid #F0EAE6; border-radius: 12px; font-size: 1.1rem; outline: none; margin-top: 10px; }
+        .modal-input:focus { border-color: var(--primary-color); }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
+        .modal-btn { padding: 10px 20px; border-radius: 10px; border: none; font-weight: 700; cursor: pointer; }
+        .modal-btn-cancel { background: #F4F1EE; color: var(--text-muted); }
+        .modal-btn-confirm { background: var(--primary-color); color: white; }
 
         /* Responsive */
         @media (max-width: 768px) {
@@ -285,7 +316,7 @@
             <div class="resize-handle"></div>
             <div class="widget-header">
                 <div class="widget-title"><span class="drag-handle">⋮⋮</span> 💳 帳戶總覽</div>
-                <div style="font-size:0.75rem; color:var(--text-muted);">點擊金額可修改</div>
+                <div style="font-size:0.75rem; color:var(--text-muted);">點擊卡片可修正餘額</div>
             </div>
             <div class="accounts-container" id="accounts-container">
                 <!-- JS Populated -->
@@ -336,7 +367,7 @@
                             <option value="taishin">台新銀行</option>
                             <option value="cash">現金</option>
                         </select>
-                        <div style="text-align:center; margin:5px;">↓</div>
+                        <div style="text-align:center; margin:2px; font-size:0.8rem; color:#ccc;">↓</div>
                         <label class="input-label">轉入 (To)</label>
                         <select id="toAccount" class="form-control">
                             <option value="cash">現金</option>
@@ -381,6 +412,18 @@
             </div>
         </div>
 
+    </div>
+</div>
+
+<!-- Custom Modal -->
+<div class="custom-modal-overlay" id="modalOverlay">
+    <div class="custom-modal">
+        <div class="modal-title" id="modalTitle">標題</div>
+        <div class="modal-body" id="modalBody">內容</div>
+        <div class="modal-actions">
+            <button class="modal-btn modal-btn-cancel" onclick="closeModal()">取消</button>
+            <button class="modal-btn modal-btn-confirm" id="modalConfirmBtn">確認</button>
+        </div>
     </div>
 </div>
 
@@ -579,16 +622,41 @@
     }
 
     function deleteTx(id) {
-        if(confirm('刪除？')) {
+        openModal('確認刪除', '確定要刪除這筆紀錄嗎？', () => {
             transactions = transactions.filter(t => t.id !== id);
             saveData();
             renderAll();
-        }
+            closeModal();
+        });
     }
 
-    // New: Edit Balance Directly
+    // Modal System - Fixed logic to avoid replaceChild error
+    const modalOverlay = document.getElementById('modalOverlay');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalBody = document.getElementById('modalBody');
+    const modalConfirmBtn = document.getElementById('modalConfirmBtn');
+
+    function openModal(title, contentHTML, onConfirm) {
+        modalTitle.innerText = title;
+        modalBody.innerHTML = contentHTML;
+        
+        // Correct way to update event listener without replaceChild
+        modalConfirmBtn.onclick = onConfirm;
+        
+        modalOverlay.classList.add('active');
+        
+        // Auto focus input if exists
+        const input = modalBody.querySelector('input');
+        if(input) setTimeout(() => input.focus(), 100);
+    }
+
+    function closeModal() {
+        modalOverlay.classList.remove('active');
+        modalConfirmBtn.onclick = null; // Clean up
+    }
+
+    // New: Edit Balance Directly using Modal
     function editBalance(accKey) {
-        // Calculate current balance
         let currentBal = 0;
         transactions.forEach(t => {
             if(t.type === 'income' && t.acc === accKey) currentBal += t.amount;
@@ -599,29 +667,34 @@
             }
         });
 
-        const input = prompt(`請輸入 ${ACCOUNTS[accKey]} 的正確餘額：`, currentBal);
-        if(input === null) return;
-        
-        const newBal = parseInt(input);
-        if(isNaN(newBal)) return alert("請輸入有效數字");
+        const html = `
+            <p>目前餘額：$${currentBal.toLocaleString()}</p>
+            <p>請輸入正確餘額：</p>
+            <input type="number" id="newBalanceInput" class="modal-input" value="${currentBal}">
+        `;
 
-        const diff = newBal - currentBal;
-        if(diff === 0) return;
+        openModal(`修正 ${ACCOUNTS[accKey]} 餘額`, html, () => {
+            const input = document.getElementById('newBalanceInput');
+            const newBal = parseInt(input.value);
+            if(isNaN(newBal)) return;
 
-        const tx = {
-            id: Date.now(),
-            date: new Date().toISOString().split('T')[0],
-            desc: '餘額修正',
-            amount: Math.abs(diff),
-            type: diff > 0 ? 'income' : 'expense',
-            acc: accKey,
-            category: '其他'
-        };
-
-        transactions.unshift(tx);
-        saveData();
-        renderAll();
-        alert(`已自動新增一筆 ${diff > 0 ? '收入' : '支出'} 修正紀錄，金額 $${Math.abs(diff)}`);
+            const diff = newBal - currentBal;
+            if(diff !== 0) {
+                const tx = {
+                    id: Date.now(),
+                    date: new Date().toISOString().split('T')[0],
+                    desc: '餘額修正',
+                    amount: Math.abs(diff),
+                    type: diff > 0 ? 'income' : 'expense',
+                    acc: accKey,
+                    category: '其他'
+                };
+                transactions.unshift(tx);
+                saveData();
+                renderAll();
+            }
+            closeModal();
+        });
     }
 
     function saveData() { localStorage.setItem('mtf_v6_txs', JSON.stringify(transactions)); }
@@ -649,8 +722,9 @@
         for(const [k, v] of Object.entries(bals)) {
             const div = document.createElement('div');
             div.className = `acc-card acc-${k}`;
-            // Added onclick event
-            div.innerHTML = `<div class="acc-label">${ACCOUNTS[k]}</div><div class="acc-val" onclick="editBalance('${k}')" title="點擊修改餘額">$${v.toLocaleString()}</div>`;
+            // Use the new editBalance
+            div.onclick = () => editBalance(k);
+            div.innerHTML = `<div class="acc-label">${ACCOUNTS[k]}</div><div class="acc-val">$${v.toLocaleString()}</div>`;
             container.appendChild(div);
         }
     }
