@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Milk Tea Finance v8.2 (Fixed Auth)</title>
+    <title>Milk Tea Finance v9.0 (Cloud Accounts)</title>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -113,18 +113,19 @@
         }
         .btn-icon:hover { background: var(--primary-color); color: white; border-color: var(--primary-color); }
 
-        .btn-reset {
-            padding: 8px 12px;
+        .btn-auth {
+            padding: 8px 16px;
             border-radius: 12px;
-            border: 1px solid var(--primary-color);
-            background: white;
-            color: var(--primary-color);
+            background: var(--text-main);
+            color: white;
             cursor: pointer;
             font-weight: 700;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
+            border: none;
+            display: flex; align-items: center; gap: 5px;
             transition: all 0.2s;
         }
-        .btn-reset:hover { background: var(--primary-color); color: white; }
+        .btn-auth:hover { background: var(--primary-dark); transform: translateY(-2px); }
 
         /* --- Grid System --- */
         .dashboard-grid {
@@ -147,41 +148,27 @@
             transition: box-shadow 0.2s, transform 0.2s;
             border: 1px solid rgba(255,255,255,0.5);
         }
-        
         .widget:hover { box-shadow: var(--shadow-hover); z-index: 10; }
 
         .widget-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-            cursor: grab;
-            padding-bottom: 8px;
-            border-bottom: 2px solid #F8F6F4;
-            flex-shrink: 0;
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 12px; cursor: grab; padding-bottom: 8px;
+            border-bottom: 2px solid #F8F6F4; flex-shrink: 0;
         }
         .widget-header:active { cursor: grabbing; }
 
         .widget-title {
-            font-weight: 800;
-            color: var(--primary-dark);
-            font-size: 1.1rem;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            pointer-events: none;
+            font-weight: 800; color: var(--primary-dark); font-size: 1.1rem;
+            display: flex; align-items: center; gap: 8px; pointer-events: none;
         }
         
         .drag-handle { color: var(--text-muted); opacity: 0.5; font-size: 1.2rem; margin-right: 10px; }
 
         .resize-handle {
-            position: absolute;
-            bottom: 0; right: 0; width: 20px; height: 20px;
-            cursor: nwse-resize;
+            position: absolute; bottom: 0; right: 0; width: 20px; height: 20px; cursor: nwse-resize;
             background: linear-gradient(135deg, transparent 50%, var(--primary-color) 50%);
             opacity: 0; transition: opacity 0.2s;
-            border-bottom-right-radius: var(--radius-lg);
-            z-index: 20;
+            border-bottom-right-radius: var(--radius-lg); z-index: 20;
         }
         .widget:hover .resize-handle { opacity: 0.8; }
 
@@ -189,11 +176,7 @@
         .accounts-container {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            height: 100%;
-            overflow-y: auto;
-            padding: 5px;
-            align-content: start;
+            gap: 20px; height: 100%; overflow-y: auto; padding: 5px; align-content: start;
         }
         @media (min-width: 900px) { .accounts-container { grid-template-columns: repeat(4, 1fr); } }
 
@@ -272,7 +255,6 @@
             transform: scale(0.9); transition: transform 0.3s;
             display: flex; flex-direction: column;
         }
-        /* Settings Modal specific */
         .custom-modal.settings-modal { max-width: 700px; height: 80vh; padding: 0; }
         
         .custom-modal-overlay.active .custom-modal { transform: scale(1); }
@@ -291,15 +273,11 @@
         .settings-col { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; }
         .settings-col:first-child { border-right: 1px solid #F0F0F0; background: #FAFAFA; flex: 0 0 200px; }
         .settings-list { list-style: none; padding: 0; }
-        .settings-item { 
-            padding: 10px 15px; border-radius: 10px; cursor: pointer; 
-            display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; font-weight: 600; font-size: 0.9rem;
-        }
+        .settings-item { padding: 10px 15px; border-radius: 10px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; font-weight: 600; font-size: 0.9rem; }
         .settings-item:hover { background: #F4F1EE; }
         .settings-item.active { background: white; color: var(--primary-color); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .settings-item .btn-del-cat { opacity: 0; color: #CCC; cursor: pointer; font-size: 1.1rem; padding: 2px 6px; }
         .settings-item:hover .btn-del-cat { opacity: 1; }
-        .settings-item .btn-del-cat:hover { color: var(--danger-color); }
         .settings-add { margin-top: 10px; display: flex; gap: 5px; }
         .settings-add input { flex: 1; padding: 8px; border: 1px solid #E0E0E0; border-radius: 8px; font-size: 0.9rem; }
         .settings-add button { padding: 8px 12px; background: var(--primary-color); color: white; border: none; border-radius: 8px; cursor: pointer; }
@@ -316,8 +294,8 @@
             .widget { height: auto !important; min-height: 300px; }
             .resize-handle { display: none; }
             header { flex-direction: column; align-items: flex-start; gap: 10px; }
-            .header-right { width: 100%; justify-content: space-between; }
-            .datetime-display { flex: 1; justify-content: center; }
+            .header-right { width: 100%; justify-content: space-between; flex-wrap: wrap; }
+            .datetime-display { flex: 1; justify-content: center; width: 100%; order: -1; margin-bottom: 5px; }
             .settings-content { flex-direction: column; }
             .settings-col:first-child { border-right: none; border-bottom: 1px solid #F0F0F0; flex: 0 0 150px; }
         }
@@ -333,14 +311,20 @@
         <div class="header-right">
             <div class="connection-status" id="connectionStatus" title="雲端連線狀態"></div>
             <div class="datetime-display" id="datetime">Loading...</div>
+            
+            <button class="btn-auth" onclick="openLoginModal()">
+                <span id="authBtnIcon">👤</span>
+                <span id="authBtnText">登入 / 註冊</span>
+            </button>
+            
             <button class="btn-icon" onclick="openSettings()" title="設定分類與細項">⚙️</button>
-            <button class="btn-reset" onclick="resetLayout()" title="若版面跑掉請點此">⟲ 重置版面</button>
+            <button class="btn-icon" onclick="resetLayout()" title="重置版面" style="font-size:1rem;">⟲</button>
         </div>
     </header>
 
     <div class="dashboard-grid" id="grid">
         
-        <!-- Widget 1: Accounts -->
+        <!-- Widget 1: Accounts (Increased Height) -->
         <div class="widget" id="widget-accounts" data-id="accounts" style="grid-column: span 12; grid-row: span 5;">
             <div class="resize-handle"></div>
             <div class="widget-header">
@@ -484,6 +468,21 @@
     </div>
 </div>
 
+<!-- Login Modal -->
+<div class="custom-modal-overlay" id="loginModalOverlay">
+    <div class="custom-modal" style="max-width: 350px;">
+        <div class="modal-title">👤 登入 / 切換帳號</div>
+        <div class="modal-body">
+            <p style="font-size:0.9rem; color:#666; margin-bottom:15px;">請輸入您的帳號名稱 (ID)，系統將自動載入該帳號的雲端資料。若帳號不存在則會自動建立。</p>
+            <input type="text" id="loginIdInput" class="modal-input" placeholder="例如：my-account-123" style="text-align:center; font-weight:bold;">
+        </div>
+        <div class="modal-actions">
+            <button class="modal-btn modal-btn-cancel" onclick="document.getElementById('loginModalOverlay').classList.remove('active')">取消</button>
+            <button class="modal-btn modal-btn-confirm" onclick="confirmLogin()">進入帳號</button>
+        </div>
+    </div>
+</div>
+
 <!-- Toast Container -->
 <div id="toast-container"></div>
 
@@ -528,6 +527,9 @@
     let chartInstance = null;
     let chartType = 'doughnut';
     let user = null;
+    
+    // Account State
+    let currentAccountId = localStorage.getItem('mtf_account_id') || 'guest';
 
     // Settings State
     let settingsType = 'expense';
@@ -553,57 +555,96 @@
         }
     });
 
+    let unsubscribeTx = null;
+    let unsubscribeCat = null;
+
     function subscribeData() {
         if (!user) return;
-        // Sync Transactions - FIXED PATH
-        const txDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'milktea_transactions', 'main_record');
-        onSnapshot(txDocRef, (docSnap) => {
+        
+        // Unsubscribe old listeners if changing account
+        if (unsubscribeTx) unsubscribeTx();
+        if (unsubscribeCat) unsubscribeCat();
+
+        // Update UI for Auth State
+        const authText = currentAccountId === 'guest' ? '登入 / 註冊' : `帳號: ${currentAccountId}`;
+        document.getElementById('authBtnText').innerText = authText;
+        document.getElementById('authBtnIcon').innerText = currentAccountId === 'guest' ? '👤' : '🟢';
+
+        // Path Strategy: artifacts/{appId}/public/data/milktea_users/{currentAccountId}
+        // This simulates "Private" data by namespacing with a user-provided ID
+        const docId = `user_${currentAccountId}`;
+        
+        const txDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'milktea_transactions', docId);
+        unsubscribeTx = onSnapshot(txDocRef, (docSnap) => {
             if (docSnap.exists()) {
                 transactions = docSnap.data().list || [];
             } else {
-                transactions = [];
+                transactions = []; // New account starts empty
             }
             renderAll();
         }, (error) => {
             console.error("Tx snapshot error", error);
-            showToast("無法讀取交易紀錄: " + error.code, "error");
+            showToast("連線錯誤", "error");
         });
 
-        // Sync Categories - FIXED PATH
-        const catDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'milktea_categories', 'main_record');
-        onSnapshot(catDocRef, (docSnap) => {
+        const catDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'milktea_categories', docId);
+        unsubscribeCat = onSnapshot(catDocRef, (docSnap) => {
             if (docSnap.exists()) {
                 categories = docSnap.data();
             } else {
                 categories = { expense: DEFAULT_EXPENSE_CATS, income: DEFAULT_INCOME_CATS };
             }
-            updateCats(); // Refresh UI
-        }, (error) => {
-            console.error("Cat snapshot error", error);
-        });
+            updateCats();
+        }, (error) => { console.error("Cat error", error); });
     }
 
     async function saveTransactionsToCloud() {
         if(!user) return;
         try {
-            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'milktea_transactions', 'main_record'), { list: transactions });
+            const docId = `user_${currentAccountId}`;
+            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'milktea_transactions', docId), { list: transactions });
         } catch(e) {
             console.error("Save error", e);
-            showToast("儲存失敗: " + e.code, "error");
+            showToast("儲存失敗", "error");
         }
     }
 
     async function saveCategoriesToCloud() {
         if(!user) return;
         try {
-            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'milktea_categories', 'main_record'), categories);
+            const docId = `user_${currentAccountId}`;
+            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'milktea_categories', docId), categories);
         } catch(e) {
             console.error("Save error", e);
-            showToast("分類儲存失敗", "error");
         }
     }
 
-    // --- 4. Drag & Resize Logic (Layout local only) ---
+    // --- Login System ---
+    window.openLoginModal = function() {
+        document.getElementById('loginIdInput').value = currentAccountId === 'guest' ? '' : currentAccountId;
+        document.getElementById('loginModalOverlay').classList.add('active');
+        setTimeout(() => document.getElementById('loginIdInput').focus(), 100);
+    };
+
+    window.confirmLogin = function() {
+        const input = document.getElementById('loginIdInput').value.trim();
+        if(input) {
+            currentAccountId = input;
+            localStorage.setItem('mtf_account_id', currentAccountId);
+            subscribeData(); // Reload data for new account
+            showToast(`歡迎回來，${currentAccountId}`, 'success');
+        } else {
+            // Switch back to guest
+            currentAccountId = 'guest';
+            localStorage.removeItem('mtf_account_id');
+            subscribeData();
+            showToast('已切換為訪客模式');
+        }
+        document.getElementById('loginModalOverlay').classList.remove('active');
+    };
+
+
+    // --- 4. Drag & Resize Logic ---
     const grid = document.getElementById('grid');
     const widgets = document.querySelectorAll('.widget');
     let draggedItem = null;
@@ -636,10 +677,10 @@
     }
     
     window.resetLayout = function() {
-        openModal('確認重置', '確定要重置所有區塊的位置和大小嗎？', () => {
+        if(confirm('重置版面配置？')) {
             localStorage.removeItem('mtf_v6_layout');
             location.reload();
-        });
+        }
     };
 
     // Initialize logic
@@ -647,7 +688,9 @@
     initLayout();
     document.getElementById('date').value = new Date().toISOString().split('T')[0];
     populateAccountSelects();
-    // Start Clock
+    // Render empty state immediately so UI isn't blank
+    renderAll();
+    
     setInterval(updateDateTime, 1000); 
     updateDateTime();
 
