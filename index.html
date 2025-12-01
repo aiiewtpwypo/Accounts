@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Milk Tea Finance v9.2 (Stable)</title>
+    <title>Milk Tea Finance v9.3 (Crash Proof)</title>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -95,10 +95,13 @@
         .datetime-display::before { content: '🕒'; font-size: 1.1rem; }
 
         .connection-status {
-            width: 10px; height: 10px; border-radius: 50%;
+            width: 12px; height: 12px; border-radius: 50%;
             background-color: #CCC; transition: background-color 0.3s;
+            border: 2px solid white;
+            box-shadow: 0 0 0 1px #E0E0E0;
         }
-        .connection-status.online { background-color: var(--success-color); box-shadow: 0 0 5px var(--success-color); }
+        .connection-status.online { background-color: var(--success-color); box-shadow: 0 0 5px var(--success-color); border-color: var(--success-color); }
+        .connection-status.error { background-color: var(--danger-color); }
 
         .btn-icon {
             width: 40px; height: 40px;
@@ -349,6 +352,7 @@
             </div>
             <div class="accounts-container" id="accounts-container">
                 <!-- JS Populated -->
+                <div style="grid-column: 1/-1; text-align:center; color:#ccc; padding:20px;">載入中...</div>
             </div>
         </div>
 
@@ -503,61 +507,42 @@
 <div id="toast-container"></div>
 
 <script type="module">
+    // --- Global Error Handler ---
+    window.onerror = function(message, source, lineno, colno, error) {
+        console.error("Global Error:", message, error);
+        if(window.showToast) window.showToast("系統錯誤: " + message, "error");
+    };
+
     // --- Firebase Imports ---
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
     import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
     import { getFirestore, doc, setDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
-    // --- Global Error Handler ---
-    window.onerror = function(message, source, lineno, colno, error) {
-        console.error("Global Error:", message, error);
-        showToast("系統錯誤: " + message, "error");
+    // --- 1. Define Global Functions FIRST (Critical for stability) ---
+    // This ensures UI buttons work even if Firebase fails later
+    
+    // Toast
+    window.showToast = function(msg, type = 'normal') {
+        const container = document.getElementById('toast-container');
+        if(!container) return;
+        const div = document.createElement('div');
+        div.className = `toast ${type}`;
+        div.innerHTML = `<span>${type==='success'?'✅':type==='error'?'⚠️':'💬'}</span> ${msg}`;
+        container.appendChild(div);
+        setTimeout(() => {
+            div.style.opacity = '0';
+            div.style.transform = 'translateX(100%)';
+            setTimeout(() => div.remove(), 300);
+        }, 3000);
     };
 
-    // --- EXPOSE FUNCTIONS TO WINDOW EARLY ---
-    // This ensures UI buttons work even if initialization delays
-    window.showToast = showToast;
-    window.renderList = renderList;
-    window.openLoginModal = openLoginModal;
-    window.confirmLogin = confirmLogin;
-    window.resetLayout = resetLayout;
-    window.setType = setType;
-    window.updateSubCats = updateSubCats;
-    window.addTx = addTx;
-    window.deleteTx = deleteTx;
-    window.closeModal = closeModal;
-    window.openSettings = openSettings;
-    window.closeSettings = closeSettings;
-    window.switchSettingsType = switchSettingsType;
-    window.addSettingsCat = addSettingsCat;
-    window.delSettingsCat = delSettingsCat;
-    window.selectSettingsCat = selectSettingsCat;
-    window.addSettingsSub = addSettingsSub;
-    window.delSettingsSub = delSettingsSub;
-    window.updateChartType = updateChartType;
-
-    // --- Data Config ---
+    // Data Config
     const ACCOUNT_ORDER = ['ctbc', 'cathay', 'taishin', 'cash'];
     const ACCOUNTS = { ctbc: '中國信託', cathay: '國泰世華', taishin: '台新銀行', cash: '現金' };
-    
-    const DEFAULT_EXPENSE_CATS = {
-        '餐飲': ['早餐', '午餐', '晚餐', '飲料', '零食', '宵夜'],
-        '交通': ['捷運', '公車', '計程車', '加油', '停車', '保養'],
-        '購物': ['日用品', '服飾', '電子產品', '美妝', '雜貨'],
-        '娛樂': ['電影', '遊戲', '聚會', '訂閱服務', '旅行'],
-        '帳單': ['房租', '電費', '水費', '瓦斯', '手機', '網路'],
-        '學習': ['書籍', '課程', '考試', '文具'],
-        '其他': ['醫療', '保險', '捐款', '雜項']
-    };
+    const DEFAULT_EXPENSE_CATS = { '餐飲':['早餐','午餐','晚餐','飲料','零食'], '交通':['捷運','公車','計程車','加油'], '購物':['日用品','服飾','電子'], '娛樂':['電影','遊戲','聚會'], '帳單':['房租','水電','手機'], '其他':['醫療','雜項'] };
+    const DEFAULT_INCOME_CATS = { '薪水':['本薪','兼職'], '獎金':['年終','績效'], '投資':['股票','利息'], '其他':['收禮','退款'] };
 
-    const DEFAULT_INCOME_CATS = {
-        '薪水': ['本薪', '兼職'],
-        '獎金': ['年終', '績效', '分紅'],
-        '投資': ['股票', '利息', '股息'],
-        '其他': ['收禮', '退款', '閒置交易']
-    };
-    
-    // --- State ---
+    // State
     let transactions = [];
     let categories = { expense: DEFAULT_EXPENSE_CATS, income: DEFAULT_INCOME_CATS };
     let currentType = 'expense';
@@ -567,245 +552,41 @@
     let currentAccountId = localStorage.getItem('mtf_account_id') || 'guest';
     let settingsType = 'expense';
     let selectedSettingsCat = null;
-    let db, auth, appId;
+    let db = null; // Will be set on init
 
-    // --- Initialization Flow ---
-    try {
-        if (typeof __firebase_config === 'undefined') {
-            throw new Error("Firebase config missing");
-        }
-        const firebaseConfig = JSON.parse(__firebase_config);
-        const app = initializeApp(firebaseConfig);
-        auth = getAuth(app);
-        db = getFirestore(app);
-        appId = typeof __app_id !== 'undefined' ? __app_id : 'milktea-default';
-        
-        initAuth();
-    } catch (e) {
-        console.error("Firebase Init Error", e);
-        showToast("資料庫連線失敗，請重新整理", "error");
-    }
-
-    // Load initial empty UI
-    initLayout();
-    document.getElementById('date').value = new Date().toISOString().split('T')[0];
-    populateAccountSelects();
-    updateCats();
-    renderAll(); // Render empty/loading state immediately
-    setInterval(updateDateTime, 1000); 
-    updateDateTime();
-
-    // --- Firebase Logic ---
-    async function initAuth() {
-        try {
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                await signInWithCustomToken(auth, __initial_auth_token);
-            } else {
-                await signInAnonymously(auth);
-            }
-        } catch(e) {
-            console.error("Auth Error", e);
-            showToast("登入驗證失敗", "error");
-        }
-    }
-
-    onAuthStateChanged(auth, (u) => {
-        if (u) {
-            user = u;
-            document.getElementById('connectionStatus').classList.add('online');
-            subscribeData();
-        } else {
-            document.getElementById('connectionStatus').classList.remove('online');
-        }
-    });
-
-    let unsubscribeTx = null;
-    let unsubscribeCat = null;
-
-    function subscribeData() {
-        if (!user) return;
-        
-        if (unsubscribeTx) unsubscribeTx();
-        if (unsubscribeCat) unsubscribeCat();
-
-        const authText = currentAccountId === 'guest' ? '登入 / 註冊' : `帳號: ${currentAccountId}`;
-        document.getElementById('authBtnText').innerText = authText;
-        document.getElementById('authBtnIcon').innerText = currentAccountId === 'guest' ? '👤' : '🟢';
-
-        const docId = `user_${currentAccountId}`;
-        
-        // Use full proper path with even segments
-        const txDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'milktea_transactions', docId);
-        unsubscribeTx = onSnapshot(txDocRef, (docSnap) => {
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                transactions = data.list || [];
-            } else {
-                transactions = [];
-            }
-            renderAll();
-        }, (error) => {
-            console.error("Tx snapshot error", error);
-            // Don't show toast for permission denied initially, just log
-        });
-
-        const catDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'milktea_categories', docId);
-        unsubscribeCat = onSnapshot(catDocRef, (docSnap) => {
-            if (docSnap.exists()) {
-                categories = docSnap.data();
-            } else {
-                categories = { expense: DEFAULT_EXPENSE_CATS, income: DEFAULT_INCOME_CATS };
-            }
-            updateCats();
-        }, (error) => { console.error("Cat error", error); });
-    }
-
-    async function saveTransactionsToCloud(callback) {
-        if(!user) { showToast("未連線，無法儲存", "error"); return; }
-        try {
-            const docId = `user_${currentAccountId}`;
-            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'milktea_transactions', docId), { list: transactions });
-            if(callback) callback();
-        } catch(e) {
-            console.error("Save error", e);
-            showToast("儲存失敗: " + e.message, "error");
-        }
-    }
-
-    async function saveCategoriesToCloud() {
-        if(!user) return;
-        try {
-            const docId = `user_${currentAccountId}`;
-            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'milktea_categories', docId), categories);
-        } catch(e) {
-            console.error("Save error", e);
-        }
-    }
-
-    // --- Logic Implementations ---
-
-    function openLoginModal() {
+    // --- UI Logic Functions ---
+    window.openLoginModal = function() {
         document.getElementById('loginIdInput').value = currentAccountId === 'guest' ? '' : currentAccountId;
         document.getElementById('loginModalOverlay').classList.add('active');
-        const input = document.getElementById('loginIdInput');
-        setTimeout(() => { input.focus(); input.select(); }, 100);
-        input.onkeydown = (e) => { if(e.key === 'Enter') confirmLogin(); };
-    }
+        setTimeout(() => document.getElementById('loginIdInput').focus(), 100);
+    };
 
-    function confirmLogin() {
+    window.confirmLogin = function() {
         const input = document.getElementById('loginIdInput').value.trim();
         if(input) {
             currentAccountId = input;
             localStorage.setItem('mtf_account_id', currentAccountId);
-            transactions = []; // Clear local visual state immediately
+            transactions = []; // Clear for visual switch
             renderAll();
             subscribeData();
-            showToast(`歡迎回來，${currentAccountId}`, 'success');
+            window.showToast(`歡迎回來，${currentAccountId}`, 'success');
         } else {
             currentAccountId = 'guest';
             localStorage.removeItem('mtf_account_id');
             subscribeData();
-            showToast('已切換為訪客模式');
+            window.showToast('已切換為訪客模式');
         }
         document.getElementById('loginModalOverlay').classList.remove('active');
-    }
+    };
 
-    // --- Layout & Drag ---
-    const grid = document.getElementById('grid');
-    const widgets = document.querySelectorAll('.widget');
-    let draggedItem = null;
-    let resizeItem = null;
-    const GRID_GAP = 20;
-    const ROW_HEIGHT = 60; 
-
-    function initLayout() {
-        try {
-            const savedLayout = JSON.parse(localStorage.getItem('mtf_v6_layout'));
-            if (savedLayout) {
-                savedLayout.forEach(conf => {
-                    const el = document.querySelector(`.widget[data-id="${conf.id}"]`);
-                    if (el) {
-                        el.style.gridColumn = `span ${conf.col}`;
-                        el.style.gridRow = `span ${conf.row}`;
-                        el.style.order = conf.order;
-                    }
-                });
-            }
-        } catch (e) { console.warn("Layout load failed", e); }
-    }
-    
-    function saveLayout() {
-        const layout = Array.from(widgets).map((w, idx) => ({
-            id: w.dataset.id,
-            col: w.style.gridColumn.split('span ')[1] || '12',
-            row: w.style.gridRow.split('span ')[1] || '6',
-            order: window.getComputedStyle(w).order || idx
-        }));
-        localStorage.setItem('mtf_v6_layout', JSON.stringify(layout));
-    }
-    
-    function resetLayout() {
-        openModal('確認重置', '確定要重置所有區塊的位置和大小嗎？', () => {
+    window.resetLayout = function() {
+        if(confirm('重置版面配置？')) {
             localStorage.removeItem('mtf_v6_layout');
             location.reload();
-        });
-    }
-
-    // Bind Drag Events
-    widgets.forEach(w => {
-        const header = w.querySelector('.widget-header');
-        header.addEventListener('mousedown', () => w.setAttribute('draggable', 'true'));
-        header.addEventListener('mouseup', () => w.setAttribute('draggable', 'false'));
-        w.addEventListener('dragstart', function(e) { draggedItem = this; this.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; });
-        w.addEventListener('dragend', function() { this.classList.remove('dragging'); this.setAttribute('draggable', 'false'); draggedItem = null; saveLayout(); });
-        const resizer = w.querySelector('.resize-handle');
-        if(resizer) resizer.addEventListener('mousedown', initResize);
-    });
-
-    grid.addEventListener('dragover', function(e) { e.preventDefault(); const afterElement = getDragAfterElement(grid, e.clientY); if (afterElement == null) grid.appendChild(draggedItem); else grid.insertBefore(draggedItem, afterElement); });
-
-    function getDragAfterElement(container, y) {
-        const draggableElements = [...container.querySelectorAll('.widget:not(.dragging)')];
-        return draggableElements.reduce((closest, child) => {
-            const box = child.getBoundingClientRect();
-            const offset = y - box.top - box.height / 2;
-            if (offset < 0 && offset > closest.offset) return { offset: offset, element: child }; else return closest;
-        }, { offset: Number.NEGATIVE_INFINITY }).element;
-    }
-
-    function initResize(e) {
-        e.preventDefault(); resizeItem = e.target.closest('.widget'); const startX = e.clientX; const startY = e.clientY; const startW = resizeItem.offsetWidth; const startH = resizeItem.offsetHeight; const colWidth = (grid.offsetWidth - (11 * GRID_GAP)) / 12;
-        function doDrag(e) {
-            const newW = startW + e.clientX - startX; const newH = startH + e.clientY - startY;
-            let colSpan = Math.round((newW + GRID_GAP) / (colWidth + GRID_GAP)); let rowSpan = Math.round((newH + GRID_GAP) / (ROW_HEIGHT + GRID_GAP));
-            colSpan = Math.max(3, Math.min(12, colSpan)); rowSpan = Math.max(3, rowSpan);
-            resizeItem.style.gridColumn = `span ${colSpan}`; resizeItem.style.gridRow = `span ${rowSpan}`;
-            if(resizeItem.id === 'widget-chart' && chartInstance) chartInstance.resize();
         }
-        function stopDrag() { window.removeEventListener('mousemove', doDrag); window.removeEventListener('mouseup', stopDrag); saveLayout(); }
-        window.addEventListener('mousemove', doDrag); window.addEventListener('mouseup', stopDrag);
-    }
+    };
 
-    // --- Helpers ---
-    function updateDateTime() {
-        const now = new Date(); const days = ['日', '一', '二', '三', '四', '五', '六'];
-        document.getElementById('datetime').innerText = `${now.getFullYear()}/${(now.getMonth()+1).toString().padStart(2,'0')}/${now.getDate().toString().padStart(2,'0')} (${days[now.getDay()]}) ${now.toLocaleTimeString('zh-TW', {hour12: false})}`;
-    }
-
-    function populateAccountSelects() {
-        const selects = ['account', 'fromAccount', 'toAccount'];
-        selects.forEach(id => {
-            const el = document.getElementById(id);
-            el.innerHTML = '';
-            ACCOUNT_ORDER.forEach(key => {
-                const opt = document.createElement('option');
-                opt.value = key; opt.innerText = ACCOUNTS[key];
-                el.appendChild(opt);
-            });
-        });
-    }
-
-    function setType(t) {
+    window.setType = function(t) {
         currentType = t;
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.type === t));
         const isTransfer = t === 'transfer';
@@ -816,7 +597,20 @@
             document.getElementById('lbl-acc').innerText = t === 'income' ? '存入帳戶' : '支出帳戶';
             updateCats();
         }
-    }
+    };
+
+    window.updateSubCats = function() {
+        const mainCat = document.getElementById('category').value;
+        const subSel = document.getElementById('sub-category');
+        subSel.innerHTML = '';
+        const catsObj = categories[currentType];
+        const subList = catsObj ? (catsObj[mainCat] || []) : [];
+        subList.forEach(sub => {
+            const opt = document.createElement('option');
+            opt.value = sub; opt.innerText = sub;
+            subSel.appendChild(opt);
+        });
+    };
 
     function updateCats() {
         const sel = document.getElementById('category');
@@ -829,28 +623,14 @@
                 sel.appendChild(opt);
             }
         }
-        updateSubCats();
+        window.updateSubCats();
     }
 
-    function updateSubCats() {
-        const mainCat = document.getElementById('category').value;
-        const subSel = document.getElementById('sub-category');
-        subSel.innerHTML = '';
-        const catsObj = categories[currentType];
-        const subList = catsObj ? (catsObj[mainCat] || []) : [];
-        subList.forEach(sub => {
-            const opt = document.createElement('option');
-            opt.value = sub; opt.innerText = sub;
-            subSel.appendChild(opt);
-        });
-    }
-
-    function addTx(e) {
+    window.addTx = function(e) {
         e.preventDefault();
         const amtInput = document.getElementById('amount');
         const descInput = document.getElementById('desc');
         const addBtn = document.getElementById('addBtn');
-        
         const amt = parseInt(amtInput.value);
         if(!amt) return;
 
@@ -865,41 +645,40 @@
         if(currentType === 'transfer') {
             tx.from = document.getElementById('fromAccount').value;
             tx.to = document.getElementById('toAccount').value;
-            if(tx.from === tx.to) return showToast('帳戶相同', 'error');
-            tx.category = '轉帳';
-            tx.subCategory = '';
+            if(tx.from === tx.to) return window.showToast('帳戶相同', 'error');
+            tx.category = '轉帳'; tx.subCategory = '';
         } else {
             tx.acc = document.getElementById('account').value;
             tx.category = document.getElementById('category').value;
             tx.subCategory = document.getElementById('sub-category').value;
         }
 
-        // Optimistic UI update
         transactions.unshift(tx);
         renderAll();
-        
-        addBtn.disabled = true;
-        addBtn.innerText = "處理中...";
+        addBtn.disabled = true; addBtn.innerText = "處理中...";
 
         saveTransactionsToCloud(() => {
-            addBtn.disabled = false;
-            addBtn.innerText = "確認新增";
-            descInput.value = '';
-            amtInput.value = '';
-            showToast('新增成功', 'success');
+            addBtn.disabled = false; addBtn.innerText = "確認新增";
+            descInput.value = ''; amtInput.value = '';
+            window.showToast('新增成功', 'success');
         });
-    }
+    };
 
-    function deleteTx(id) {
+    window.deleteTx = function(id) {
         openModal('確認刪除', '確定要刪除這筆紀錄嗎？', () => {
             transactions = transactions.filter(t => t.id !== id);
             saveTransactionsToCloud();
             closeModal();
-            showToast('已刪除', 'success');
+            window.showToast('已刪除', 'success');
         });
-    }
+    };
 
-    // Modal Helpers
+    window.updateChartType = function(t) {
+        chartType = t;
+        renderChart();
+    };
+
+    // Modal
     const modalOverlay = document.getElementById('modalOverlay');
     const modalTitle = document.getElementById('modalTitle');
     const modalBody = document.getElementById('modalBody');
@@ -916,31 +695,221 @@
             input.onkeydown = (e) => { if(e.key === 'Enter') { e.preventDefault(); modalConfirmBtn.click(); } };
         }
     }
+    window.closeModal = function() { modalOverlay.classList.remove('active'); modalConfirmBtn.onclick = null; };
 
-    function closeModal() { modalOverlay.classList.remove('active'); modalConfirmBtn.onclick = null; }
+    // Settings
+    window.openSettings = function() { document.getElementById('settingsModalOverlay').classList.add('active'); selectedSettingsCat = null; renderSettingsCats(); renderSettingsSubs(); };
+    window.closeSettings = function() { document.getElementById('settingsModalOverlay').classList.remove('active'); updateCats(); };
+    window.switchSettingsType = function(type) { settingsType = type; document.getElementById('set-tab-expense').classList.toggle('active', type === 'expense'); document.getElementById('set-tab-income').classList.toggle('active', type === 'income'); selectedSettingsCat = null; renderSettingsCats(); renderSettingsSubs(); };
+    window.selectSettingsCat = function(cat) { selectedSettingsCat = cat; renderSettingsCats(); renderSettingsSubs(); };
+    
+    function renderSettingsCats() {
+        const list = document.getElementById('settingsCatList'); list.innerHTML = '';
+        const cats = categories[settingsType];
+        if(cats) {
+            for (const cat in cats) {
+                const li = document.createElement('li'); li.className = 'settings-item ' + (selectedSettingsCat === cat ? 'active' : '');
+                li.innerHTML = `<span onclick="window.selectSettingsCat('${cat}')" style="flex:1;">${cat}</span><span class="btn-del-cat" onclick="window.delSettingsCat('${cat}')">×</span>`;
+                list.appendChild(li);
+            }
+        }
+    }
+    function renderSettingsSubs() {
+        const list = document.getElementById('settingsSubList'); const headerName = document.getElementById('selectedCatName'); const addGroup = document.getElementById('subAddGroup');
+        list.innerHTML = '';
+        if (!selectedSettingsCat) { headerName.innerText = ''; addGroup.style.display = 'none'; list.innerHTML = '<li style="color:#CCC; text-align:center; padding:20px;">請先選擇左側主分類</li>'; return; }
+        headerName.innerText = `(${selectedSettingsCat})`; addGroup.style.display = 'flex';
+        const subs = categories[settingsType][selectedSettingsCat] || [];
+        subs.forEach((sub, idx) => {
+            const li = document.createElement('li'); li.className = 'settings-item';
+            li.innerHTML = `<span>${sub}</span><span class="btn-del-cat" onclick="window.delSettingsSub(${idx})">×</span>`;
+            list.appendChild(li);
+        });
+        document.getElementById('newSubInput').onkeydown = (e) => { if(e.key === 'Enter') window.addSettingsSub(); };
+    }
+    document.getElementById('newCatInput').onkeydown = (e) => { if(e.key === 'Enter') window.addSettingsCat(); };
 
-    function editBalance(accKey) {
-        let currentBal = 0;
+    window.addSettingsCat = function() {
+        const input = document.getElementById('newCatInput'); const val = input.value.trim(); if(!val) return;
+        if(categories[settingsType] && categories[settingsType][val]) return window.showToast('分類已存在', 'error');
+        if(!categories[settingsType]) categories[settingsType] = {};
+        categories[settingsType][val] = []; saveCategoriesToCloud(); renderSettingsCats(); input.value = '';
+    };
+    window.delSettingsCat = function(cat) {
+        openModal('確認刪除', `確定刪除主分類「${cat}」？`, () => { delete categories[settingsType][cat]; if(selectedSettingsCat === cat) selectedSettingsCat = null; saveCategoriesToCloud(); renderSettingsCats(); renderSettingsSubs(); closeModal(); });
+    };
+    window.addSettingsSub = function() {
+        const input = document.getElementById('newSubInput'); const val = input.value.trim(); if(!val) return;
+        categories[settingsType][selectedSettingsCat].push(val); saveCategoriesToCloud(); renderSettingsSubs(); input.value = '';
+    };
+    window.delSettingsSub = function(idx) {
+        categories[settingsType][selectedSettingsCat].splice(idx, 1); saveCategoriesToCloud(); renderSettingsSubs();
+    };
+
+    // --- Time ---
+    function updateDateTime() {
+        const now = new Date(); const days = ['日', '一', '二', '三', '四', '五', '六'];
+        document.getElementById('datetime').innerText = `${now.getFullYear()}/${(now.getMonth()+1).toString().padStart(2,'0')}/${now.getDate().toString().padStart(2,'0')} (${days[now.getDay()]}) ${now.toLocaleTimeString('zh-TW', {hour12: false})}`;
+    }
+    setInterval(updateDateTime, 1000); updateDateTime();
+
+    // --- Init Local UI immediately ---
+    // This ensures no blank screen
+    document.getElementById('date').value = new Date().toISOString().split('T')[0];
+    const selIds = ['account', 'fromAccount', 'toAccount'];
+    selIds.forEach(id => {
+        const el = document.getElementById(id); el.innerHTML = '';
+        ACCOUNT_ORDER.forEach(key => { const opt = document.createElement('option'); opt.value = key; opt.innerText = ACCOUNTS[key]; el.appendChild(opt); });
+    });
+    updateCats();
+    renderAll(); // Renders 0 values initially
+
+    // --- Firebase Initialization ---
+    let unsubscribeTx = null;
+    let unsubscribeCat = null;
+
+    try {
+        if (typeof __firebase_config === 'undefined') {
+            console.warn("Firebase Config missing - Offline Mode");
+            document.getElementById('connectionStatus').classList.add('error');
+        } else {
+            const firebaseConfig = JSON.parse(__firebase_config);
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth(app);
+            db = getFirestore(app);
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'milktea-default';
+
+            const initAuth = async () => {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            };
+            initAuth();
+
+            onAuthStateChanged(auth, (u) => {
+                if (u) {
+                    user = u;
+                    document.getElementById('connectionStatus').classList.add('online');
+                    document.getElementById('connectionStatus').classList.remove('error');
+                    subscribeData(appId);
+                } else {
+                    document.getElementById('connectionStatus').classList.remove('online');
+                }
+            });
+        }
+    } catch (e) {
+        console.error("FB Init Crash", e);
+        document.getElementById('connectionStatus').classList.add('error');
+        window.showToast("連線失敗，僅供離線瀏覽", "error");
+    }
+
+    function subscribeData(appId) {
+        if (!user || !db) return;
+        if (unsubscribeTx) unsubscribeTx();
+        if (unsubscribeCat) unsubscribeCat();
+
+        // Update UI Text
+        const authText = currentAccountId === 'guest' ? '登入 / 註冊' : `帳號: ${currentAccountId}`;
+        document.getElementById('authBtnText').innerText = authText;
+        document.getElementById('authBtnIcon').innerText = currentAccountId === 'guest' ? '👤' : '🟢';
+
+        const docId = `user_${currentAccountId}`;
+        
+        // Listen Transactions
+        const txDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'milktea_transactions', docId);
+        unsubscribeTx = onSnapshot(txDocRef, (docSnap) => {
+            if (docSnap.exists()) {
+                transactions = docSnap.data().list || [];
+            } else {
+                transactions = [];
+            }
+            renderAll();
+        }, (err) => { console.log("Tx Wait:", err.code); }); // Silent fail to avoid spam
+
+        // Listen Categories
+        const catDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'milktea_categories', docId);
+        unsubscribeCat = onSnapshot(catDocRef, (docSnap) => {
+            if (docSnap.exists()) {
+                categories = docSnap.data();
+            } else {
+                categories = { expense: DEFAULT_EXPENSE_CATS, income: DEFAULT_INCOME_CATS };
+            }
+            updateCats();
+        });
+    }
+
+    async function saveTransactionsToCloud(callback) {
+        if(!user || !db) { window.showToast("離線中", "error"); return; }
+        try {
+            const docId = `user_${currentAccountId}`;
+            // Use window.__app_id if available within scope, else try to grab from closure or global
+            const currentAppId = typeof __app_id !== 'undefined' ? __app_id : 'milktea-default';
+            await setDoc(doc(db, 'artifacts', currentAppId, 'public', 'data', 'milktea_transactions', docId), { list: transactions });
+            if(callback) callback();
+        } catch(e) {
+            console.error("Save error", e);
+            window.showToast("儲存失敗", "error");
+        }
+    }
+
+    async function saveCategoriesToCloud() {
+        if(!user || !db) return;
+        try {
+            const docId = `user_${currentAccountId}`;
+            const currentAppId = typeof __app_id !== 'undefined' ? __app_id : 'milktea-default';
+            await setDoc(doc(db, 'artifacts', currentAppId, 'public', 'data', 'milktea_categories', docId), categories);
+        } catch(e) { console.error("Save cat error", e); }
+    }
+
+    // --- Render Functions ---
+    function renderAll() {
+        renderAccounts();
+        renderList();
+        renderChart();
+    }
+
+    function renderAccounts() {
+        const bals = { ctbc: 0, cathay: 0, taishin: 0, cash: 0 };
         transactions.forEach(t => {
-            if(t.type === 'income' && t.acc === accKey) currentBal += t.amount;
-            if(t.type === 'expense' && t.acc === accKey) currentBal -= t.amount;
+            if(t.type === 'income') bals[t.acc] += t.amount;
+            if(t.type === 'expense') bals[t.acc] -= t.amount;
             if(t.type === 'transfer') {
-                if(t.from === accKey) currentBal -= t.amount;
-                if(t.to === accKey) currentBal += t.amount;
+                if(t.from) bals[t.from] -= t.amount;
+                if(t.to) bals[t.to] += t.amount;
             }
         });
 
+        const container = document.getElementById('accounts-container');
+        container.innerHTML = '';
+
+        const totalAmount = Object.values(bals).reduce((a, b) => a + b, 0);
+        const totalDiv = document.createElement('div');
+        totalDiv.className = 'acc-card acc-total';
+        totalDiv.innerHTML = `<div class="acc-label">💰 總資產</div><div class="acc-val">$${totalAmount.toLocaleString()}</div>`;
+        container.appendChild(totalDiv);
+
+        ACCOUNT_ORDER.forEach(k => {
+            const div = document.createElement('div');
+            div.className = `acc-card acc-${k}`;
+            div.onclick = () => editBalance(k, bals);
+            div.innerHTML = `<div class="acc-label">${ACCOUNTS[k]}</div><div class="acc-val">$${bals[k].toLocaleString()}</div>`;
+            container.appendChild(div);
+        });
+    }
+
+    function editBalance(accKey, currentBals) {
+        const currentBal = currentBals[accKey];
         const html = `
             <p>目前餘額：$${currentBal.toLocaleString()}</p>
             <p>請輸入正確餘額：</p>
             <input type="number" id="newBalanceInput" class="modal-input" value="${currentBal}">
         `;
-
         openModal(`修正 ${ACCOUNTS[accKey]} 餘額`, html, () => {
             const input = document.getElementById('newBalanceInput');
             const newBal = parseInt(input.value);
             if(isNaN(newBal)) return;
-
             const diff = newBal - currentBal;
             if(diff !== 0) {
                 const tx = {
@@ -960,159 +929,12 @@
         });
     }
 
-    // Settings Modal
-    const settingsModal = document.getElementById('settingsModalOverlay');
-    
-    function openSettings() {
-        settingsModal.classList.add('active');
-        selectedSettingsCat = null;
-        renderSettingsCats();
-        renderSettingsSubs();
-    }
-    
-    function closeSettings() {
-        settingsModal.classList.remove('active');
-        updateCats();
-    }
-
-    function switchSettingsType(type) {
-        settingsType = type;
-        document.getElementById('set-tab-expense').classList.toggle('active', type === 'expense');
-        document.getElementById('set-tab-income').classList.toggle('active', type === 'income');
-        selectedSettingsCat = null;
-        renderSettingsCats();
-        renderSettingsSubs();
-    }
-
-    function renderSettingsCats() {
-        const list = document.getElementById('settingsCatList');
-        list.innerHTML = '';
-        const cats = categories[settingsType];
-        if(cats) {
-            for (const cat in cats) {
-                const li = document.createElement('li');
-                li.className = 'settings-item ' + (selectedSettingsCat === cat ? 'active' : '');
-                li.innerHTML = `<span onclick="window.selectSettingsCat('${cat}')" style="flex:1;">${cat}</span><span class="btn-del-cat" onclick="window.delSettingsCat('${cat}')">×</span>`;
-                list.appendChild(li);
-            }
-        }
-    }
-
-    function selectSettingsCat(cat) {
-        selectedSettingsCat = cat;
-        renderSettingsCats();
-        renderSettingsSubs();
-    }
-
-    function renderSettingsSubs() {
-        const list = document.getElementById('settingsSubList');
-        const headerName = document.getElementById('selectedCatName');
-        const addGroup = document.getElementById('subAddGroup');
-        list.innerHTML = '';
-        if (!selectedSettingsCat) {
-            headerName.innerText = '';
-            addGroup.style.display = 'none';
-            list.innerHTML = '<li style="color:#CCC; text-align:center; padding:20px;">請先選擇左側主分類</li>';
-            return;
-        }
-        headerName.innerText = `(${selectedSettingsCat})`;
-        addGroup.style.display = 'flex';
-        const subs = categories[settingsType][selectedSettingsCat] || [];
-        subs.forEach((sub, idx) => {
-            const li = document.createElement('li');
-            li.className = 'settings-item';
-            li.innerHTML = `<span>${sub}</span><span class="btn-del-cat" onclick="window.delSettingsSub(${idx})">×</span>`;
-            list.appendChild(li);
-        });
-        
-        // Enter key support
-        const subInput = document.getElementById('newSubInput');
-        subInput.onkeydown = (e) => { if(e.key === 'Enter') addSettingsSub(); };
-    }
-    
-    document.getElementById('newCatInput').onkeydown = (e) => { if(e.key === 'Enter') addSettingsCat(); };
-
-    function addSettingsCat() {
-        const input = document.getElementById('newCatInput');
-        const val = input.value.trim();
-        if(!val) return;
-        if(categories[settingsType] && categories[settingsType][val]) return showToast('分類已存在', 'error');
-        if(!categories[settingsType]) categories[settingsType] = {};
-        categories[settingsType][val] = [];
-        saveCategoriesToCloud();
-        renderSettingsCats();
-        input.value = '';
-    }
-
-    function delSettingsCat(cat) {
-        openModal('確認刪除', `確定刪除主分類「${cat}」？`, () => {
-            delete categories[settingsType][cat];
-            if(selectedSettingsCat === cat) selectedSettingsCat = null;
-            saveCategoriesToCloud();
-            renderSettingsCats();
-            renderSettingsSubs();
-            closeModal();
-        });
-    }
-
-    function addSettingsSub() {
-        const input = document.getElementById('newSubInput');
-        const val = input.value.trim();
-        if(!val) return;
-        categories[settingsType][selectedSettingsCat].push(val);
-        saveCategoriesToCloud();
-        renderSettingsSubs();
-        input.value = '';
-    }
-
-    function delSettingsSub(idx) {
-        categories[settingsType][selectedSettingsCat].splice(idx, 1);
-        saveCategoriesToCloud();
-        renderSettingsSubs();
-    }
-
-    // --- Render All ---
-    function renderAll() {
-        renderAccounts();
-        renderList();
-        renderChart();
-    }
-
-    function renderAccounts() {
-        const bals = { ctbc: 0, cathay: 0, taishin: 0, cash: 0 };
-        transactions.forEach(t => {
-            if(t.type === 'income') bals[t.acc] += t.amount;
-            if(t.type === 'expense') bals[t.acc] -= t.amount;
-            if(t.type === 'transfer') {
-                bals[t.from] -= t.amount;
-                bals[t.to] += t.amount;
-            }
-        });
-
-        const container = document.getElementById('accounts-container');
-        container.innerHTML = '';
-
-        const totalAmount = Object.values(bals).reduce((a, b) => a + b, 0);
-        const totalDiv = document.createElement('div');
-        totalDiv.className = 'acc-card acc-total';
-        totalDiv.innerHTML = `<div class="acc-label">💰 總資產</div><div class="acc-val">$${totalAmount.toLocaleString()}</div>`;
-        container.appendChild(totalDiv);
-
-        ACCOUNT_ORDER.forEach(k => {
-            const div = document.createElement('div');
-            div.className = `acc-card acc-${k}`;
-            div.onclick = () => editBalance(k);
-            div.innerHTML = `<div class="acc-label">${ACCOUNTS[k]}</div><div class="acc-val">$${bals[k].toLocaleString()}</div>`;
-            container.appendChild(div);
-        });
-    }
-
     function renderList() {
         const listEl = document.getElementById('txList');
         const search = document.getElementById('search').value.toLowerCase();
         listEl.innerHTML = '';
         
-        const filtered = transactions.filter(t => t.desc.toLowerCase().includes(search) || t.category.includes(search));
+        const filtered = transactions.filter(t => (t.desc || '').toLowerCase().includes(search) || (t.category || '').includes(search));
         
         if (filtered.length === 0) {
             listEl.innerHTML = '<div style="text-align:center; padding:20px; color:#ccc;">無資料</div>';
@@ -1141,18 +963,11 @@
         });
     }
 
-    function updateChartType(t) {
-        chartType = t;
-        renderChart();
-    }
-
     function renderChart() {
         const ctx = document.getElementById('mainChart').getContext('2d');
         if(chartInstance) chartInstance.destroy();
 
-        if (transactions.length === 0) {
-            return;
-        }
+        if (transactions.length === 0) return;
 
         const dataMap = {};
         transactions.filter(t => t.type === 'expense').forEach(t => {
@@ -1176,24 +991,35 @@
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: {
-                    legend: { position: 'bottom' }
-                }
+                plugins: { legend: { position: 'bottom' } }
             }
         });
     }
 
-    function showToast(msg, type = 'normal') {
-        const container = document.getElementById('toast-container');
-        const div = document.createElement('div');
-        div.className = `toast ${type}`;
-        div.innerHTML = `<span>${type==='success'?'✅':type==='error'?'⚠️':'💬'}</span> ${msg}`;
-        container.appendChild(div);
-        setTimeout(() => {
-            div.style.opacity = '0';
-            div.style.transform = 'translateX(100%)';
-            setTimeout(() => div.remove(), 300);
-        }, 3000);
+    // --- Layout (Drag & Resize) Setup ---
+    function initLayout() {
+        try {
+            const savedLayout = JSON.parse(localStorage.getItem('mtf_v6_layout'));
+            if (savedLayout) {
+                savedLayout.forEach(conf => {
+                    const el = document.querySelector(`.widget[data-id="${conf.id}"]`);
+                    if (el) {
+                        el.style.gridColumn = `span ${conf.col}`;
+                        el.style.gridRow = `span ${conf.row}`;
+                        el.style.order = conf.order;
+                    }
+                });
+            }
+        } catch(e) {}
+    }
+    function saveLayout() {
+        const layout = Array.from(widgets).map((w, idx) => ({
+            id: w.dataset.id,
+            col: w.style.gridColumn.split('span ')[1] || '12',
+            row: w.style.gridRow.split('span ')[1] || '6',
+            order: window.getComputedStyle(w).order || idx
+        }));
+        localStorage.setItem('mtf_v6_layout', JSON.stringify(layout));
     }
 </script>
 
